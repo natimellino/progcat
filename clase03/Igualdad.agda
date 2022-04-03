@@ -99,10 +99,10 @@ subst P {a} {.a} refl x = x
 {- Probar sym y trans usando subst -}
 
 sym' : {A : Set} → {a b : A} → a ≡ b → b ≡ a
-sym' {a = a} p = subst {!!} {!!} {!!}
+sym' {a = a} p = subst (λ x → x ≡ a) p refl
 
 trans' : {A : Set}{a b c : A} → a ≡ b → b ≡ c → a ≡ c
-trans' {a = a} ab bc = subst {!!} {!!} {!!}
+trans' {a = a} ab bc = subst (λ x → a ≡ x) bc ab 
 
 --------------------------------------------------
 
@@ -134,6 +134,10 @@ open import Data.Nat hiding (_⊔_)
 +suc zero n = refl
 +suc (suc m) n = cong suc (+suc m n)
 
+suc+ : (m n : ℕ) → suc m + n ≡ suc (m + n)
+suc+ m zero = refl
+suc+ m (suc n) = cong suc refl 
+
 {- Probemos que esta suma es equivalente a la otra -}
 _+'_ : ℕ → ℕ → ℕ
 x +' zero = x
@@ -150,6 +154,7 @@ suma-equiv x (suc y) = trans (+suc x y) (cong suc (suma-equiv x y))
 open ≡-Reasoning
 open import Data.Product
 
+-- m + suc n ≡ suc (m + n)
 suma-equiv' : (x y : ℕ) → x + y ≡ x +' y
 suma-equiv' x zero = +0 x
 suma-equiv' x (suc y) = 
@@ -172,20 +177,85 @@ suma-equiv' x (suc y) =
 {- Ejercicios
 intentar que la prueba sea legible usando ≡-Reasoning
 -}
+-- m + suc n ≡ suc (m + n)
 +-comm : (m n : ℕ) → m + n ≡ n + m
-+-comm m n = {!!}
-
++-comm zero n = sym (+0 n)
++-comm (suc m) n = 
+  begin 
+    (suc m + n) 
+  ≡⟨ (suc+ m n) ⟩ 
+   (suc (m + n)) 
+  ≡⟨ (cong suc (+-comm m n)) ⟩ 
+   (suc (n + m)) 
+  ≡⟨ sym (+suc n m) ⟩ 
+   (n + suc m) 
+  ∎ 
+   
+-- _≡⟨_⟩_
 +-assoc : (m n l : ℕ) → m + (n + l) ≡ (m + n) + l
-+-assoc m n l = {!!}
++-assoc zero n l = refl
++-assoc (suc m) n l = 
+ begin 
+  ((suc m) + (n + l)) 
+ ≡⟨ (suc+ m ((n + l))) ⟩ 
+   suc (m + (n + l)) 
+ ≡⟨ cong suc (+-assoc m n l) ⟩ 
+  (suc ((m + n) + l)) 
+ ≡⟨ suc+ (m + n) l ⟩ 
+  (suc (m + n) + l) 
+ ≡⟨ cong (λ x → x + l) (sym (suc+ m n)) ⟩ 
+  (suc m + n) + l 
+  ∎
 
+-- _≡⟨_⟩_
 *0 : ∀ m → 0 ≡ m * 0
-*0 m = {!   !}
+*0 zero = refl
+*0 (suc m) = 
+  begin 
+    0 
+  ≡⟨ *0 m ⟩ 
+   (m * 0) 
+  ≡⟨ refl ⟩ 
+   suc m * 0 
+  ∎
 
+-- _≡⟨_⟩_
 *suc : (m n : ℕ) → m + m * n ≡ m * suc n
-*suc m n = {!   !} 
+*suc zero n = refl
+*suc (suc m) n = 
+  begin 
+    (suc m + (suc m) * n) 
+  ≡⟨ refl ⟩ 
+    ((suc m) + (n + m * n)) 
+  ≡⟨(+-assoc (suc m) n (m * n)) ⟩ 
+   (suc m + n) + (m * n)
+  ≡⟨ refl ⟩ 
+   (suc (m + n)) + m * n
+  ≡⟨ cong (λ x → suc x + m * n) (+-comm m n) ⟩ 
+   ((suc (n + m)) + m * n) 
+  ≡⟨ refl ⟩ 
+   ((suc n + m) + m * n) 
+  ≡⟨ sym (+-assoc (suc n) m (m * n)) ⟩ 
+   suc n + (m + m * n) 
+  ≡⟨ cong (λ x → suc n + x) (*suc m n) ⟩ 
+   (suc n + m * suc n) 
+  ≡⟨ refl ⟩ 
+   (suc m * suc n) 
+  ∎
 
+-- _≡⟨_⟩_
 *-comm : (m n : ℕ) → m * n ≡ n * m
-*-comm m n = {!   !}
+*-comm m zero = sym (*0 m)
+*-comm m (suc n) = 
+  begin 
+   (m * suc n) 
+  ≡⟨ (sym (*suc m n)) ⟩ 
+   (m + m * n) 
+  ≡⟨ (cong (λ x → m + x) (*-comm m n)) ⟩ 
+   (m + n * m) 
+  ≡⟨ refl ⟩ 
+   suc n * m 
+  ∎
 
 {- 
 Decidibilidad 
@@ -362,10 +432,10 @@ _$- : {A : Set} {B : A → Set} → ((x : A) → B x) → ({x : A} → B x)
 f $- = f _
 
 implicit-extensionality : Extensionality → ExtensionalityImplicit
-implicit-extensionality ext f≅g = {!   !}
+implicit-extensionality ext f≅g = H.cong _$- (ext (λ x → refl) (λ x → f≅g))
 
 iext : ExtensionalityImplicit
-iext = {!   !}
+iext = λ x → H.cong _$- (ext (λ y → refl) λ z → x)
 
 
 --------------------------------------------------
@@ -381,23 +451,56 @@ open import Data.Sum
   div₂ : división por 2
 -}
 mod₂ : ℕ → ℕ 
-mod₂ n = {!   !}
+mod₂ zero = zero
+mod₂ (suc zero) = suc 0
+mod₂ (suc (suc n)) = mod₂ n
 
 div₂ : ℕ → ℕ
-div₂ n = {!   !}
+div₂ zero = zero
+div₂ (suc zero) = zero
+div₂ (suc (suc n)) = suc (div₂ n)
 
 {- Probar las sigfuientes propiedades: -}
 
 mod₂Lem : (n : ℕ) → (mod₂ n ≡ 0) ⊎ (mod₂ n ≡ 1)
-mod₂Lem n = {!   !}
+mod₂Lem zero = inj₁ refl
+mod₂Lem (suc zero) = inj₂ refl
+mod₂Lem (suc (suc n)) = mod₂Lem n
 
+-- _≡⟨_⟩_
 div₂Lem : ∀ {n} → 2 * (div₂ n) + mod₂ n ≡ n
-div₂Lem {n} = {!   !}
+div₂Lem {zero} = refl
+div₂Lem {suc zero} = refl
+div₂Lem {suc (suc n)} = 
+  begin 
+   (2 * (div₂ (suc (suc n))) + mod₂ (suc (suc n))) 
+  ≡⟨ cong (λ x → x +  mod₂ (suc (suc n))) (sym (*suc 2 (div₂ n))) ⟩ 
+   2 + 2 * div₂ n + mod₂ (suc (suc n)) 
+  ≡⟨ cong (λ x → 2 + 2 * div₂ n + x) refl ⟩ 
+   (2 + 2 * div₂ n + mod₂ n) 
+  ≡⟨ sym (+-assoc 2 (2 * div₂ n) (mod₂ n)) ⟩ 
+   2 + (2 * div₂ n + mod₂ n) 
+  ≡⟨ cong (λ x → 2 + x) div₂Lem ⟩ 
+   (2 + n) 
+  ≡⟨ refl ⟩ 
+   suc (suc n) 
+  ∎
 
 {- Mostrar que la igualdad modulo 2 es decidible -}
 
 _≡₂_ : ℕ → ℕ → Set
 m ≡₂ n = mod₂ m ≡ mod₂ n
 
+{--
 _≡₂?_ : (m n : ℕ) → Dec (m ≡₂ n)
-m ≡₂? n = {!   !}
+m ≡₂? n with mod₂ m | mod₂ n
+... | zero  | zero = yes refl
+... | zero  | suc i = no (lem i)
+... | suc j | zero  = no λ ()
+... | suc j | suc i = suc j ≡? suc i
+-}
+
+_≡₂?_ : (m n : ℕ) → Dec (m ≡₂ n)
+m ≡₂? n with mod₂ m | mod₂ n
+... | i  | j = i ≡? j
+ 

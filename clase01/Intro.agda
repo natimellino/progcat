@@ -1,14 +1,3 @@
-{- 
-
-    Introducción a la Programación con Tipos Dependientes
-      
-           Mauro Jaskelioff
-
- basado en día1 del curso de Thorsten Altenkirch en Rosario, 2011.
-
-
--}
-
 module Intro where
 
 
@@ -61,7 +50,8 @@ suc m + n = suc (m + n)
 ----------------------------------------------
 {- Ejercicio : Definir la multiplicación -}
 _*_ :  ℕ → ℕ → ℕ
-m * n = {!  !}
+m * zero = zero
+m * suc n = m + m * n
 ----------------------------------------------
 
 infixl 6 _+_
@@ -112,14 +102,16 @@ rev (x ∷ xs) = snoc (rev xs) x
 --------------------------------------------------
 {- Ej : longitud de una lista -}
 length : {A : Set} → List A → ℕ
-length xs = {!!}
---------------------------------------------------
+length [] = 0
+length (x ∷ xs) = 1 + length xs
 
+-------------------------------------------------
 
 --------------------------------------------------
 {- Ej : concatenar dos listas -}
 _++_ : {A : Set} → List A → List A → List A
-xs ++ ys = {!!}
+[] ++ ys = ys
+x ∷ xs ++ ys = x ∷ (xs ++ ys)
 --------------------------------------------------
 
 infixr 4 _++_
@@ -137,15 +129,11 @@ appL (f ∷ fs) (x ∷ xs) = (f x) ∷ (appL fs xs)
 
 {-
 ¿Qué longitud debería tener la respuesta?
-
 Si alguna de las listas es más larga que la otra, 
 significa que alguna de las entradas tenía basura.
-
 Si la listas son de igual longitud, digamos n, entonces la respuesta debería ser n.
 O sea esperamos que
-
   ∀fs, xs. length fs ≡ length xs ⇒ length (appL fs xs) ≡ length fs
-
 En EDyAII lo probaríamos por inducción sobre fs (por ejemplo).
 -}
 
@@ -193,9 +181,7 @@ Ejemplos:
           [] : Vec ℕ 0
       2 ∷ [] : Vec ℕ 1
   4 ∷ 2 ∷ [] : Vec ℕ 2
-
 Con esta definición internalizamos las invariantes sobre longitud de la listas.
-
 ¡*Chequeamos* la longitud al escribir el programa, en lugar de *medir* en runtime!
 -}
 
@@ -223,7 +209,6 @@ Fin 0   no tiene elementos
 Fin 1   zero
 Fin 2   zero  (suc (zero))
 Fin 3   zero  (suc zero) (suc (suc (zero)))
-
 -}
 
 
@@ -253,11 +238,15 @@ nat (suc n) = suc (nat n)
         de manera tal que nat x = nat (emb x)
 -}
 emb : {n : ℕ} → Fin n → Fin (suc n)
-emb = {!!}
+emb zero = zero
+emb (suc n) = suc (emb n) 
 
 {- Ej: inv me lleva de {0,1,...,n-1} a {n-1,..,1,0} -}
 inv : {n : ℕ} → Fin n → Fin n
-inv i = {!!}
+inv zero = max
+inv (suc i) = emb (inv i)
+
+
 -----------------------------------------------------------
 
 
@@ -292,8 +281,9 @@ Matrix m n = Vec (Vector n) m
 
 -------------------------------------------------------
 {- Ej: multiplicación por un escalar -}
+
 _*v_ : {n : ℕ} → ℕ → Vector n → Vector n
-k *v ms = mapVec {!!} ms
+k *v ms = mapVec (λ x → k * x) ms
 
 v1 : Vector 3
 v1 = 1 ∷ 2 ∷ 3 ∷ []
@@ -303,7 +293,8 @@ test1 = 2 *v v1
 
 {- Ej: suma de vectores -}
 _+v_ : {n : ℕ} → Vector n → Vector n → Vector n
-ms +v ns = {!!}
+[] +v [] = []
+(m ∷ ms) +v (n ∷ ns) = m + n ∷ (ms +v ns)
 
 v2 : Vector 3
 v2 = 2 ∷ 3 ∷ 0 ∷ []
@@ -311,9 +302,14 @@ v2 = 2 ∷ 3 ∷ 0 ∷ []
 test2 : Vector 3
 test2 = v1 +v v2
 
+zeroVec : {n : ℕ} -> Vector n
+zeroVec {zero} = []
+zeroVec {suc i} = 0 ∷ zeroVec {i}
+
 {- Ej: multiplicación de un vector y una matriz -}
 _*vm_ : {m n : ℕ} → Vector m → Matrix m n → Vector n
-ms *vm nss = {!!}
+[] *vm [] = zeroVec
+(m ∷ ms) *vm (ns ∷ nss) = (m *v ns) +v (ms *vm nss)
 
 id3 : Matrix 3 3
 id3 = (1 ∷ 0 ∷ 0 ∷ []) 
@@ -324,9 +320,11 @@ id3 = (1 ∷ 0 ∷ 0 ∷ [])
 test3 : Vector 3
 test3 = v1 *vm id3
 
+
+
 {- Ej: multiplicación de matrices -}
 _*mm_ : {l m n : ℕ} → Matrix l m → Matrix m n → Matrix l n
-mss *mm nss = {!!}
+mss *mm nss = mapVec (λ ms → ms *vm nss) mss
 
 inv3 : Matrix 3 3
 inv3 = (0 ∷ 0 ∷ 1 ∷ []) 
@@ -339,7 +337,7 @@ test4 = inv3 *mm inv3
 
 {- Ej: transposición de matrices -}
 transpose : {n m : ℕ} → Matrix m n → Matrix n m
-transpose m = {!!}
+transpose m = {!  !}
 
 ej5 : Matrix 3 3
 ej5 = ( 0 ∷ 1 ∷ 2 ∷ [])
@@ -354,6 +352,4 @@ test5 = transpose ej5
 {-
 Bajar el archivo del repositorio y hacer los ejercicios.
  git clone https://github.com/mjaskelioff/progcat.git
-
 -}
-  

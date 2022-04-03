@@ -160,13 +160,14 @@ curry⇔ = curry→ , curry←
 --------------------------------------
 {- Ejercicios -}
 ∨∧→ : {P Q R : prop} → (P ∨ Q → R) → ((P → R) ∧ (Q → R))
-∨∧→ = {!!}
+∨∧→ = λ x → (λ p → x (left p)) , λ q → x (right q)
 
 ∨∧← : {P Q R : prop} → ((P → R) ∧ (Q → R)) → (P ∨ Q → R) 
-∨∧← x y = {!!}
+∨∧← (pr , qr) (left p) = pr p
+∨∧← (pr , qr) (right q) = qr q
 
 ∨∧ : {P Q R : prop} → (P ∨ Q → R) ⇔ ((P → R) ∧ (Q → R))
-∨∧ = {!!}
+∨∧ = ∨∧→ , ∨∧←
 ----------------------------------------
 
 {- Introducimos la negación
@@ -183,24 +184,27 @@ contrapos : {P Q : prop} → (P → Q) → ¬ Q → ¬ P
 contrapos pq nq p = nq (pq p)
 
 -----------------------------------------------
-{- Ejercicio: paradoja -}
+{- Ejercicio: paradoja -} 
 paradox : {P : prop} → ¬ (P ⇔ ¬ P) 
-paradox psiinop = {!!}
+paradox (pnp , npp) = pnp (npp (λ x → pnp x x)) (npp (λ z → pnp z z))
 
 {- Ejercicio: Probamos las leyes de de Morgan -}
 
 deMorgan¬∨ : {P Q : prop} → ¬ (P ∨ Q) → ¬ P ∧ ¬ Q 
-deMorgan¬∨ npq = {!!} 
+deMorgan¬∨ npq = (λ x → npq (left x)) , (λ x → npq (right x)) 
   
 deMorgan¬∧¬ : {P Q : prop} → (¬ P) ∧ (¬ Q) → ¬ (P ∨ Q)
-deMorgan¬∧¬ npnq poq = {!!}
+deMorgan¬∧¬ (np , nq) (left p) = np p
+deMorgan¬∧¬ (np , nq) (right q) = nq q
   
 deMorgan¬∨¬ : {P Q : prop} → (¬ P) ∨ (¬ Q) → ¬ (P ∧ Q)
-deMorgan¬∨¬ nponq = {!!}
+deMorgan¬∨¬ (left p) = λ x → p (fst x)
+deMorgan¬∨¬ (right q) = λ x → q (snd x)
 
+{- No sepuedeeee
 deMorgan¬∧ : {P Q : prop} → ¬ (P ∧ Q) → (¬ P) ∨ (¬ Q)
-deMorgan¬∧ npq = {!!}
-
+deMorgan¬∧ npq = {! npq !}
+-}
 -------------------------------------------------------
 
 {- sobre razonamiento clásico vs. razonamiento intuicionístico. -}
@@ -298,31 +302,32 @@ unprovable
 {- ¬ (∃ x:A. P x) ⇔ ∀ x:A. ¬ P x -}
 deMorgan¬∃ : {A : Set}{P : A → prop} →
            ¬ (∃ A (λ x → P x)) → ((x : A) → ¬ (P x))
-deMorgan¬∃ = {!!}
+deMorgan¬∃ = λ neap a pa → neap (a , pa)
 
 deMorgan∀¬ : {A : Set}{P : A → prop} →
            ((x : A) → ¬ (P x)) → ¬ (∃ A (λ x → P x))
-deMorgan∀¬ f x = {!!} 
+deMorgan∀¬ f (a , x) = f a x 
 
-{- ¬ (∀ x:A. P x) ⇔ ∃ x:A . ¬ P x -}
+{- ¬ (∀ x:A. P x) ⇔ ∃ x:A . ¬ P x
 deMorgan¬∀ : {A : Set}{P : A → prop} →
              ¬ ((x : A) → P x) → ∃ A (λ x → ¬ (P x))
-deMorgan¬∀ x = {!!}
+deMorgan¬∀ x = {!  !}
+-}
 
 deMorgan∃¬ : {A : Set}{P : A → prop} →
            ∃ A (λ x → ¬ (P x)) → ¬ ((x : A) → P x)
-deMorgan∃¬ x np = {!!}
+deMorgan∃¬ (a , x) np = x (np a)
 
 --------------------------------------------------
-{- relación entre ∀ y ∃ -}
+{- Ejercicio: relación entre ∀ y ∃ -}
 
 curry∀→ : {A : Set}{P : A → Set}{Q : prop}
          → ((∃ A P) → Q) → (a : A) → P a → Q
-curry∀→ x = {!!}
+curry∀→ x = λ a pa → x ((a , pa))
 
 curry∀← : {A : Set}{P : A → Set}{Q : prop}
          → ((a : A) → P a → Q) → ((∃ A P) → Q)
-curry∀← x e = {!!}
+curry∀← x (a , pa) = x a pa
 
 --------------------------------------------------
 -- Ejercicios adicionales
@@ -336,13 +341,15 @@ curry∀← x e = {!!}
 ¬¬ P = ¬ (¬ P)
 
 pnnp : {P : prop} → P → ¬¬ P 
-pnnp p np = {!!}
+pnnp p np = np p
 
+{- No se puede :(
 raa : {P : prop} → ¬¬ P → P
-raa nnp = efq (nnp (λ x → nnp (λ x' → {!!})))
+raa nnp = efq (nnp (λ x → nnp (λ x' → {!  !})))
+-}
 
 ¬¬terex : {P : prop} → ¬¬ (P ∨ ¬ P)
-¬¬terex = {!!}
+¬¬terex = λ npnp → npnp (right (λ x → npnp (left x)))
 
 TerEx : Set₁
 TerEx = {P : prop} → P ∨ ¬ P
@@ -351,43 +358,50 @@ RAA : Set₁
 RAA = {P : prop} → ¬¬ P → P
 
 RAA→TerEx : RAA → TerEx
-RAA→TerEx = {!!}
+RAA→TerEx = λ x → x (λ npnp → npnp (right (λ p → npnp (left p))))
 
+{- No se puede probar :(
 TerEx→RND : TerEx → RAA
-TerEx→RND = {!!}
+TerEx→RND = λ x nnp → {!   !}
+-}
 
 ret¬¬ : {P : prop} → P → ¬¬ P
-ret¬¬ = {!!}
+ret¬¬ = λ p np → np p
+
 
 bind¬¬ : {P Q : prop} → ¬¬ P → (P → ¬¬ Q) → ¬¬ Q 
-bind¬¬ = {!!}
+bind¬¬ = λ nnp pnnq nq → nnp (λ p → pnnq p nq)   
 
 map¬¬ : {P Q : prop} → ¬¬ P → (P → Q) → ¬¬ Q
-map¬¬ = {!!}
+map¬¬ = λ nnp pq nq → nnp (λ p → nq ((pq p)))
 
 app¬¬ : {P Q : prop} → ¬¬ (P → Q) → ¬¬ P → ¬¬ Q
-app¬¬ = {!!}
+app¬¬ = λ nnpq nnp nq → nnp (λ p → nnpq (λ pq → nq (pq p)))
 
 ∧¬¬-1 : {P Q : prop} → ¬¬ (P ∧ Q) → ¬¬ P ∧ ¬¬ Q
-∧¬¬-1 = {!!}
+∧¬¬-1 = λ nnpq → (λ np → nnpq (λ pq → np (fst pq))) , λ nq → nnpq (λ pq → nq (snd pq))
 
 ∧¬¬-2 : {P Q : prop} → ¬¬ P ∧ ¬¬ Q → ¬¬ (P ∧ Q) 
-∧¬¬-2 = {!!}
+∧¬¬-2 (nnp , nnq) = λ npyq → nnp (λ p → nnq (λ q → npyq (p , q)))
 
 ∧¬¬ : {P Q : prop} → ¬¬ (P ∧ Q) ⇔ ¬¬ P ∧ ¬¬ Q
-∧¬¬ = {!!}
+∧¬¬ = ∧¬¬-1 , ∧¬¬-2
 
 
+{-
 ∨¬¬-1 : {P Q : prop} → ¬¬ (P ∨ Q) → ¬¬ P ∨ ¬¬ Q
-∨¬¬-1 nnpq = {!!} 
+∨¬¬-1 nnpq = {!   !} 
+-}
 
 ∨¬¬-2 : {P Q : prop} → ¬¬ P ∨ ¬¬ Q → ¬¬ (P ∨ Q) 
-∨¬¬-2 nnp∨nnq = {!!}
+∨¬¬-2 (left nnp) = λ npvq → nnp (λ p → npvq (left p))
+∨¬¬-2 (right nnq) = λ npvq → nnq (λ q → npvq (right q))
 
-
-
+{-
 ∨¬¬ : {P Q : prop} → ¬¬ (P ∨ Q) ⇔ ¬¬ P ∨ ¬¬ Q
-∨¬¬ = {!!} , ∨¬¬-2 
+∨¬¬ = {!   !}, ∨¬¬-2 
+-}
 
 ¬¬deMorgan¬∧ : {P Q : prop} → ¬ (P ∧ Q) → ¬¬ ((¬ P) ∨ (¬ Q))
-¬¬deMorgan¬∧ = {!!}
+¬¬deMorgan¬∧ = λ npq nnpnq → nnpnq (left (λ p → nnpnq (right (λ q → npq (p , q)))))
+ 
