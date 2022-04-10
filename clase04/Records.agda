@@ -36,7 +36,7 @@ record Monoid : Set₁  where
 -}
 
 open import Data.Nat
-open import Data.Nat.Properties using (+-identityʳ ; +-assoc)
+open import Data.Nat.Properties using (+-identityʳ ; +-assoc ; *-distribʳ-+)
 
 -- Monoide de Naturales y suma
 
@@ -185,11 +185,15 @@ length-is-monoid-homo = record {
 --------------------------------------------------
 {- Ejercicio: Probar que multiplicar por una constante es un es un homorfismo de NatMonoid -}
 
+mult-const-proof : {c : ℕ} → Is-Monoid-Homo NatMonoid NatMonoid (_* c)
+mult-const-proof {c} = record { 
+  preserves-unit = refl ; 
+  preserves-mult = λ {x} {y} → *-distribʳ-+ c x y } 
 
 --------------------------------------------------
 module Foldr (M : Monoid) where
 
- open Monoid M renaming (Carrier to MCarrier ; lid to mlid ; rid to mrid)
+ open Monoid M renaming (Carrier to MCarrier ; lid to mlid ; rid to mrid )
 
  {- Ejercicio : Definir foldr y probar que (foldr _∙_ ε) es un homorfismo de monoides -}
 
@@ -198,9 +202,17 @@ module Foldr (M : Monoid) where
  foldr _⊗_ e [] = e
  foldr _⊗_ e (x ∷ xs) = x ⊗ (foldr _⊗_ e xs)
 
+-- _≡⟨_⟩_
  proof-foldr : (xs : List MCarrier) → (ys : List MCarrier) → foldr _∙_ ε (xs ++ ys) ≡ foldr _∙_ ε xs ∙ foldr _∙_ ε ys
  proof-foldr [] ys = sym mlid
- proof-foldr (x ∷ xs) ys = cong {!   !} {!   !}
+ proof-foldr (x ∷ xs) ys = 
+  begin 
+    (x ∙ foldr _∙_ ε (xs ++ ys)) 
+  ≡⟨ (cong (x ∙_) (proof-foldr xs ys)) ⟩ 
+   (x ∙ (foldr _∙_ ε xs ∙ foldr _∙_ ε ys)) 
+  ≡⟨ sym assoc ⟩
+      (x ∙ foldr _∙_ ε xs) ∙ foldr _∙_ ε ys 
+  ∎
 
  foldr-is-monoid-homo : Is-Monoid-Homo (ListMonoid MCarrier) M (foldr _∙_ ε)
  foldr-is-monoid-homo = record { 
@@ -224,19 +236,117 @@ open Iso
 {- Ejercicio : introducir un tipo de datos (record) ⊤ con un único habitante y
 probar que  ℕ es isomorfo a List ⊤ -}
 
+module NatIsoList where
+  data ⊤ : Set where
+    tt : ⊤
+
+  proof-fun-x : ℕ → (List ⊤)
+  proof-fun-x zero = []
+  proof-fun-x (suc n) = tt ∷ (proof-fun-x n)
+
+  proof-inv : (List ⊤) → ℕ
+  proof-inv xs = length xs
+
+  proof-l1 : (xs : List ⊤) → proof-fun-x (proof-inv xs) ≡ xs
+  proof-l1 [] = refl
+  proof-l1 (tt ∷ xs) = cong (tt ∷_) (proof-l1 xs)
+
+  proof-l2 : (a : ℕ) → proof-inv (proof-fun-x a) ≡ a
+  proof-l2 zero = refl
+  proof-l2 (suc a) = cong suc (proof-l2 a) 
+
+  proof-nat-list-iso : Iso ℕ  (List ⊤)
+  proof-nat-list-iso = record { 
+    fun = proof-fun-x ; 
+    inv = proof-inv ; 
+    law1 = proof-l1 ; 
+    law2 = proof-l2 }
 
 {- Ejercicio: introducir un constructor de tipos Maybe (o usar Data.Maybe) y probar que
 Maybe ℕ es isomorfo a ℕ -}
+
+module MaybeIsoN where
+  
+  data Maybe {a} (A : Set a) : Set a where
+    just : A → Maybe A
+    nothing : Maybe A
+
+  proof-fun : Maybe ℕ → ℕ
+  proof-fun nothing = zero
+  proof-fun (just x) = suc x
+
+  proof-inv : ℕ → Maybe ℕ
+  proof-inv zero = nothing
+  proof-inv (suc n) = just n
+
+  proof-l1 : (b : ℕ) → proof-fun (proof-inv b) ≡ b
+  proof-l1 zero = refl
+  proof-l1 (suc b) = refl
+
+  proof-l2 : (a : Maybe ℕ) → proof-inv (proof-fun a) ≡ a
+  proof-l2 nothing = refl
+  proof-l2 (just x) = refl
+
+  proof-maybe-iso-n : Iso (Maybe ℕ) ℕ
+  proof-maybe-iso-n = record { 
+    fun = proof-fun ; 
+    inv = proof-inv ; 
+    law1 = proof-l1 ; 
+    law2 = proof-l2 }
 
 {- Ejercicio: introducir un constructor de tipos _×_ para productos
 cartesianos (o usar el de Data.Product) y probar que (A → B × C) es
 isomorfo a (A → B) × (A → C) para todos A, B, y C, habitantes de Set -}
 
+module IsoProd where
+  open import Data.Product
+
+  pfun : {A B C : Set} → (A → B × C) → (A → B) × (A → C)
+  pfun f = (λ x → proj₁ (f x)) , (λ x → proj₂ (f x))
+
+  pinv : {A B C : Set} → ((A → B) × (A → C)) → (A → B × C)
+  pinv (f , g) = λ x → (f x) , (g x)
+
+  proof-iso-prod : {A B C : Set} → Iso (A → B × C) ((A → B) × (A → C))
+  proof-iso-prod = record { 
+    fun = pfun ; 
+    inv = pinv ; 
+    law1 = λ b → refl ; 
+    law2 = λ a → refl }  
+
 
 {- Ejercicio: construir isomorfismos entre Vec A n × Vec B n y
 Vec (A × B) n para todos A, B habitantes de Set y n natural -}
 
-open import Data.Vec
+module VecIso where
+
+  open import Data.Vec
+
+  pfun : {n : ℕ} → {A B : Set} → ((Vec A n) × (Vec B n)) → Vec (A × B) n
+  pfun ([] , []) = []
+  pfun (x ∷ xs , y ∷ ys) = (x , y) ∷ (pfun (xs , ys))
+
+  pinv : {n : ℕ} → {A B : Set} → (Vec (A × B) n) → ((Vec A n) × (Vec B n))
+  pinv [] = [] , []
+  pinv (x ∷ b) with pinv b
+  ... | ba , bb = (((fst x) ∷ ba) , ((snd x) ∷ bb))
+
+  pl1 : {n : ℕ} → {A B : Set}  → (b : Vec (A × B) n) → pfun (pinv b) ≡ b
+  pl1 [] = refl
+  pl1 (x ∷ b) = cong (λ z → x ∷ z) (pl1 b)
+
+  pl2 : {n : ℕ} → {A B : Set}  → (a : Vec A n × Vec B n) → pinv (pfun a) ≡ a
+  pl2 ([] , []) = refl
+  pl2 (x ∷ xs , y ∷ ys) = cong (λ w → x ∷ (fst w) , y ∷ (snd w)) (pl2 (xs , ys))
+
+  -- (pinv ((x , y) ∷ pfun (xs , ys)) | pinv (pfun (xs , ys))) ≡ (x ∷ xs , y ∷ ys)
+
+  proof-vec-iso : {n : ℕ} → {A B : Set}  → Iso ((Vec A n) × (Vec B n)) (Vec (A × B) n)
+  proof-vec-iso = record { 
+    fun = pfun ; 
+    inv = pinv ; 
+    law1 = pl1 ; 
+    law2 = pl2 }
 
 
 --------------------------------------------------
@@ -248,4 +358,4 @@ Ayuda : puede ser útil usar cong-app
 
 Biyectiva : {X Y : Set}(f : X → Y) → Set
 Biyectiva {X} {Y} f = (y : Y) → Σ X (λ x → (f x ≡ y) × (∀ x' → f x' ≡ y → x ≡ x')) 
- 
+  
