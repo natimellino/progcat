@@ -285,11 +285,12 @@ module ArrowCat (C : Cat) where
        g₂ : Hom B B'
        prop :  f' ∙ g₁ ≡ g₂ ∙ f
  
+-- {X : {X = X₁ : Obj} {Y : Obj} → Hom X₁ Y} → Slice₁ X X
  ArrowCat : Cat
  ArrowCat = record
    { Obj = ∀ {X Y : Obj} → Hom X Y
    ; Hom = λ f g → Slice₁ f g
-   ; iden = {!   !}
+   ; iden = (iden , iden) refl
    ; _∙_ = {!   !}
    ; idl = {!   !}
    ; idr = {!   !}
