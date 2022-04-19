@@ -303,16 +303,38 @@ module ArrowCat (C : Cat) where
  IdenArrow {X} = (iden , iden) (trans idr (sym idl))
 
  OpArrow : {X Y Z : ArrowObj} → HomArrow Y Z → HomArrow X Y → HomArrow X Z
- OpArrow ((f₁ , f₂) propf) ((g₁ , g₂) propg) 
-  = ((f₁ ∙ g₁) , (f₂ ∙ g₂)) (proof {!   !})
+ OpArrow  {X} {Y} {Z} ((f₁ , f₂) propf) ((g₁ , g₂) propg) 
+  = ((f₁ ∙ g₁) , (f₂ ∙ g₂)) 
+    (proof 
+      hom Z ∙ (f₁ ∙ g₁) 
+    ≡⟨ sym ass ⟩ 
+      ((hom Z ∙ f₁) ∙ g₁) 
+    ≡⟨ (cong (λ x → x ∙ g₁) propf) ⟩ 
+     ((f₂ ∙ hom Y) ∙ g₁) 
+    ≡⟨ ass ⟩ 
+     (f₂ ∙ (hom Y ∙ g₁)) 
+    ≡⟨ (cong (λ x → f₂ ∙ x) propg) ⟩ 
+     (f₂ ∙ (g₂ ∙ hom X)) 
+    ≡⟨ (sym ass) ⟩ 
+     (((f₂ ∙ g₂) ∙ hom X) ∎)
+    )
 
+ IdlArrow : {X Y : ArrowObj} {f : HomArrow X Y} → OpArrow IdenArrow f ≡ f
+ IdlArrow {X} {Y} {(g₁ , g₂) prop} = proof 
+   (OpArrow IdenArrow ((g₁ , g₂) prop)) 
+  ≡⟨ refl ⟩ 
+   ((iden ∙ g₁) , (iden ∙ g₂)) {!   !}
+  ≡⟨ {!   !} ⟩ 
+   {!   !}
+
+-- (OpArrow IdenArrow ((g₁ , g₂) prop)) 
 -- {X : {X = X₁ : Obj} {Y : Obj} → Hom X₁ Y} → Arrow₁ X X
  ArrowCat : Cat
  ArrowCat = record
    { Obj =  ArrowObj -- ∀ {X Y : Obj} → Hom X Y
    ; Hom = HomArrow   -- {! Arrow₁ f g  !} 
    ; iden = IdenArrow
-   ; _∙_ = {!   !}
+   ; _∙_ = OpArrow
    ; idl = {!   !}
    ; idr = {!   !}
    ; ass = {!   !}
@@ -334,11 +356,17 @@ record Iso {C : Cat}(A B : Obj C)(fun : Hom C A B) : Set where
 --------------------------------------------------
 
 {- Ejercicio
- Mostrar que en el caso de la categoría Sets, isomorfismo corresponde a biyección de funciones
+ Mostrar que en el caso de la categoría Sets, isomorfismo corresponde 
+ a biyección de funciones
 
 Ayuda : puede ser útil usar cong-app
 -}
 
+Biyectiva : {X Y : Set}(f : X → Y) → Set
+Biyectiva {X} {Y} f = (y : Y) → Σ X (λ x → (f x ≡ y) × (∀ x' → f x' ≡ y → x ≡ x'))
+
+iso-bi : (A B : Set) → (fun : Hom Sets A B) → Iso A B fun → Biyectiva fun
+iso-bi = {!   !} 
 
 --------------------------------------------------
 {- Ejercicio:
@@ -367,4 +395,4 @@ Ayuda : puede ser útil usar cong-app
 --------------------------------------------------
 
 
- 
+  
