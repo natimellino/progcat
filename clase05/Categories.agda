@@ -274,29 +274,50 @@ module MonCat where
                     f' ∙ g₁ ≡ g₂ ∙ f
 -}
 
+open ≡-Reasoning
+
 module ArrowCat (C : Cat) where
 
- open Cat C 
+ open Cat C
 
- record Slice₁ {A A' B B' : Obj} (f : Hom A B) (f' : Hom A' B') : Set where 
-    constructor _,_
-    field
-       g₁ : Hom A A'
-       g₂ : Hom B B'
-       prop :  f' ∙ g₁ ≡ g₂ ∙ f
- 
--- {X : {X = X₁ : Obj} {Y : Obj} → Hom X₁ Y} → Slice₁ X X
+ record ArrowObj : Set₁ where
+  field
+   from : Obj
+   to : Obj
+   hom : Hom from to
+
+ open ArrowObj
+ record Arrow₁ {A A' B B' : ArrowObj} 
+               (f : Hom (ArrowObj.from A) (ArrowObj.to B)) 
+               (f' : Hom (ArrowObj.from A') (ArrowObj.to B')) : Set where 
+  constructor _,_
+  field
+   g₁ : Hom (ArrowObj.from A) (ArrowObj.from A')
+   g₂ : Hom (ArrowObj.to B) (ArrowObj.to B')
+   prop :  f' ∙ g₁ ≡ g₂ ∙ f
+   
+ HomArrow : ArrowObj → ArrowObj → Set
+ HomArrow record { from = from₁ ; to = to₁ ; hom = hom₁ } record { from = from ; to = to ; hom = hom } = Arrow₁ hom₁ hom
+  
+ IdenArrow : {X : ArrowObj} → HomArrow X X
+ IdenArrow {X} = (iden , iden) (trans idr (sym idl))
+
+ OpArrow : {X Y Z : ArrowObj} → HomArrow Y Z → HomArrow X Y → HomArrow X Z
+ OpArrow ((f₁ , f₂) propf) ((g₁ , g₂) propg) 
+  = ((f₁ ∙ g₁) , (f₂ ∙ g₂)) (proof {!   !})
+
+-- {X : {X = X₁ : Obj} {Y : Obj} → Hom X₁ Y} → Arrow₁ X X
  ArrowCat : Cat
  ArrowCat = record
-   { Obj = ∀ {X Y : Obj} → Hom X Y
-   ; Hom = λ f g → Slice₁ f g
-   ; iden = (iden , iden) refl
+   { Obj =  ArrowObj -- ∀ {X Y : Obj} → Hom X Y
+   ; Hom = HomArrow   -- {! Arrow₁ f g  !} 
+   ; iden = IdenArrow
    ; _∙_ = {!   !}
    ; idl = {!   !}
    ; idr = {!   !}
    ; ass = {!   !}
    }
- 
+  
 --------------------------------------------------
 {- Generalizamos la noción de isomorfismo de la clase pasada a cualquier categoría -}
 
