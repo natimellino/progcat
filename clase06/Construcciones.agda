@@ -115,12 +115,21 @@ module ProductMorphisms (p : Products)
   {- Definir el morfismo pair -}
   pair : ∀{A B C D}(f : Hom A B)(g : Hom C D)
        → Hom (A × C) (B × D)
-  pair f g = {!!}
+  pair f g = ⟨ (f ∙ π₁) , (g ∙ π₂) ⟩
 
   -- Probar las siguientes propiedades de pair
 
   idpair : ∀{X Y} → pair (iden {X}) (iden {Y}) ≅ iden {X × Y}
-  idpair {X} {Y} = {!!}
+  idpair {X} {Y} = proof 
+     pair iden iden 
+    ≅⟨ refl ⟩ 
+     ⟨ (iden ∙ π₁) , (iden ∙ π₂) ⟩ 
+    ≅⟨ cong (λ x → ⟨ x , (iden ∙ π₂) ⟩) idl ⟩ 
+     ⟨ π₁ , iden ∙ π₂ ⟩ 
+    ≅⟨ (cong (λ x → ⟨ π₁ , x ⟩) idl) ⟩ 
+     ⟨ π₁ , π₂ ⟩ 
+    ≅⟨ {!   !} ⟩ 
+     {!   !}
 
   compdistrib : ∀{A B C D E F}
               → (f : Hom B C)(g : Hom A B)
@@ -128,6 +137,7 @@ module ProductMorphisms (p : Products)
               → pair (f ∙ g) (h ∙ i) ≅ pair f h ∙ pair g i
   compdistrib f g h i = {!!}
 
+-- _≅⟨_⟩_
 ----------------------
 -- Inicial
 ----------------------
