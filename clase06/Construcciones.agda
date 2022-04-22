@@ -129,13 +129,22 @@ module ProductMorphisms (p : Products)
     ≅⟨ (cong (λ x → ⟨ π₁ , x ⟩) idl) ⟩ 
      ⟨ π₁ , π₂ ⟩ 
     ≅⟨ {!   !} ⟩ 
-     {!   !}
+     iden ∎
 
   compdistrib : ∀{A B C D E F}
               → (f : Hom B C)(g : Hom A B)
               → (h : Hom E F)(i : Hom D E)
               → pair (f ∙ g) (h ∙ i) ≅ pair f h ∙ pair g i
-  compdistrib f g h i = {!!}
+  compdistrib f g h i = proof 
+      (pair (f ∙ g) (h ∙ i)) 
+    ≅⟨ refl ⟩ 
+      ⟨ ((f ∙ g) ∙ π₁) , ((h ∙ i) ∙ π₂) ⟩ 
+    ≅⟨ (cong₂ ⟨_,_⟩ ass ass) ⟩ 
+      ⟨ (f ∙ (g ∙ π₁)) , (h ∙ (i ∙ π₂)) ⟩ 
+    ≅⟨ {! _∙_  !} ⟩ 
+      {!    !} 
+    ≅⟨ {!   !} ⟩ 
+      {!   !}
 
 -- _≅⟨_⟩_
 ----------------------
@@ -174,7 +183,7 @@ record Coproducts : Set (a ⊔ b) where
 
  {- Ejercicio: Definir copair        -}
   copair : ∀{X Y Z W}(f : Hom X Z)(g : Hom Y W) → Hom (X + Y) (Z + W)
-  copair f g = {!   !}
+  copair f g = [ (inl ∙ f) , (inr ∙ g) ]
  
 
 
@@ -184,7 +193,7 @@ module CoproductMorphisms {cp : Coproducts} where
 
   {- Definir el siguiente morfismo -}
   plus : ∀{A B C D}(f : Hom A B)(g : Hom C D) → Hom (A + C) (B + D)
-  plus f g = {!   !}
+  plus f g = [ (inl ∙ f) , (inr ∙ g) ]
 
   {- Probar las siguentes propiedades -}
 
@@ -195,7 +204,14 @@ module CoproductMorphisms {cp : Coproducts} where
          → (f : Hom B C)(g : Hom A B)
          → (h : Hom E F)(i : Hom D E)
          → plus (f ∙ g) (h ∙ i) ≅ plus f h ∙ plus g i
-  idcomp  f g h i = {!   !}  
+  idcomp  f g h i = proof 
+        (plus (f ∙ g) (h ∙ i)) 
+      ≅⟨ refl ⟩ 
+        [ (inl ∙ (f ∙ g)) , (inr ∙ (h ∙ i)) ] 
+      ≅⟨ {!   !} ⟩ 
+        {! _∙_  !} 
+      ≅⟨ {!   !} ⟩ 
+        {!   !} 
 
 module Intercambio {cp : Coproducts}{p : Products} where
 
@@ -209,3 +225,4 @@ module Intercambio {cp : Coproducts}{p : Products} where
          → (h : Hom A D)(k : Hom B D)
          → ⟨ [ f , g ] , [ h , k ] ⟩ ≅ [ ⟨ f , h ⟩ , ⟨ g , k ⟩ ]
   intercambio f g h k = {! ⟨ [ f , g ] , [ h , k ] ⟩  !}
+  
