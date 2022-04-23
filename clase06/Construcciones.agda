@@ -120,31 +120,52 @@ module ProductMorphisms (p : Products)
   -- Probar las siguientes propiedades de pair
 
   idpair : ∀{X Y} → pair (iden {X}) (iden {Y}) ≅ iden {X × Y}
-  idpair {X} {Y} = proof 
-     pair iden iden 
-    ≅⟨ refl ⟩ 
-     ⟨ (iden ∙ π₁) , (iden ∙ π₂) ⟩ 
-    ≅⟨ cong (λ x → ⟨ x , (iden ∙ π₂) ⟩) idl ⟩ 
-     ⟨ π₁ , iden ∙ π₂ ⟩ 
-    ≅⟨ (cong (λ x → ⟨ π₁ , x ⟩) idl) ⟩ 
-     ⟨ π₁ , π₂ ⟩ 
-    ≅⟨ {!   !} ⟩ 
-     iden ∎
+  idpair {X} {Y} = sym (law3 (trans idr (sym idl)) (trans idr (sym idl)))
+  
+  --proof 
+  --    pair iden iden 
+  --   ≅⟨ refl ⟩ 
+  --    ⟨ (iden ∙ π₁) , (iden ∙ π₂) ⟩ 
+  --   ≅⟨ cong (λ x → ⟨ x , (iden ∙ π₂) ⟩) idl ⟩ 
+  --    ⟨ π₁ , iden ∙ π₂ ⟩ 
+  --   ≅⟨ (cong (λ x → ⟨ π₁ , x ⟩) idl) ⟩ 
+  --    ⟨ π₁ , π₂ ⟩ 
+  --   ≅⟨ {!   !} ⟩ 
+  --    iden ∎
+
+  proof1 : ∀{A B C D E F} → (f : Hom B C)(g : Hom A B) → (h : Hom E F)(i : Hom D E) → π₁ ∙ pair f h ∙ pair g i ≅ (f ∙ g) ∙ π₁
+  proof1 f g h i = proof 
+      (π₁ ∙ pair f h ∙ pair g i) 
+    ≅⟨ (sym ass) ⟩ 
+      ((π₁ ∙ pair f h) ∙ pair g i) 
+    ≅⟨ (cong (λ x → x ∙ pair g i) law1) ⟩ 
+      ((f ∙ π₁) ∙ pair g i) 
+    ≅⟨ ass ⟩ 
+      (f ∙ (π₁ ∙ pair g i)) 
+    ≅⟨ (cong (λ x → f ∙ x) law1) ⟩ 
+      f ∙ g ∙ π₁ 
+    ≅⟨ sym ass ⟩ 
+      (f ∙ g) ∙ π₁ ∎
+
+  proof2 : ∀{A B C D E F} → (f : Hom B C)(g : Hom A B) → (h : Hom E F)(i : Hom D E) → π₂ ∙ pair f h ∙ pair g i ≅ (h ∙ i) ∙ π₂
+  proof2 f g h i = proof 
+      (π₂ ∙ pair f h ∙ pair g i) 
+    ≅⟨ (sym ass) ⟩ 
+      ((π₂ ∙ pair f h) ∙ pair g i) 
+    ≅⟨ (cong (λ x → x ∙ pair g i) law2) ⟩ 
+      ((h ∙ π₂) ∙ pair g i) 
+    ≅⟨ ass ⟩ 
+      (h ∙ (π₂ ∙ pair g i)) 
+    ≅⟨ (cong (λ x → h ∙ x) law2) ⟩ 
+      h ∙ i ∙ π₂ 
+    ≅⟨ sym ass ⟩ 
+      (h ∙ i) ∙ π₂ ∎ 
 
   compdistrib : ∀{A B C D E F}
               → (f : Hom B C)(g : Hom A B)
               → (h : Hom E F)(i : Hom D E)
               → pair (f ∙ g) (h ∙ i) ≅ pair f h ∙ pair g i
-  compdistrib f g h i = proof 
-      (pair (f ∙ g) (h ∙ i)) 
-    ≅⟨ refl ⟩ 
-      ⟨ ((f ∙ g) ∙ π₁) , ((h ∙ i) ∙ π₂) ⟩ 
-    ≅⟨ (cong₂ ⟨_,_⟩ ass ass) ⟩ 
-      ⟨ (f ∙ (g ∙ π₁)) , (h ∙ (i ∙ π₂)) ⟩ 
-    ≅⟨ {! _∙_  !} ⟩ 
-      {!    !} 
-    ≅⟨ {!   !} ⟩ 
-      {!   !}
+  compdistrib f g h i = sym (law3 (proof1 f g h i) (proof2 f g h i))
 
 -- _≅⟨_⟩_
 ----------------------
@@ -198,20 +219,47 @@ module CoproductMorphisms {cp : Coproducts} where
   {- Probar las siguentes propiedades -}
 
   idplus : ∀{A B} → plus (iden {A}) (iden {B}) ≅ iden {A + B}
-  idplus = {!   !}
+  idplus = sym (law3 (trans idl (sym idr)) (trans idl (sym idr)))
 
+  compProof1 : ∀{A B C D E F}
+         → (f : Hom B C)(g : Hom A B)
+         → (h : Hom E F)(i : Hom D E)
+         → (plus f h ∙ plus g i) ∙ inl ≅ inl ∙ (f ∙ g)
+  compProof1 f g h i = proof 
+      (plus f h ∙ plus g i) ∙ inl 
+    ≅⟨ ass ⟩ 
+      plus f h ∙ (plus g i ∙ inl) 
+    ≅⟨ cong (λ x → plus f h ∙ x) law1 ⟩ 
+      (plus f h ∙ inl ∙ g) 
+    ≅⟨ (sym ass) ⟩ 
+      ((plus f h ∙ inl) ∙ g) 
+    ≅⟨ (cong (λ x → x ∙ g) law1) ⟩ 
+      (inl ∙ f) ∙ g
+    ≅⟨ ass ⟩ 
+      (inl ∙ f ∙ g) ∎
+
+  compProof2 : ∀{A B C D E F}
+         → (f : Hom B C)(g : Hom A B)
+         → (h : Hom E F)(i : Hom D E)
+         → (plus f h ∙ plus g i) ∙ inr ≅ inr ∙ (h ∙ i)
+  compProof2 f g h i = proof 
+      (plus f h ∙ plus g i) ∙ inr 
+    ≅⟨ ass ⟩ 
+      plus f h ∙ (plus g i ∙ inr) 
+    ≅⟨ cong (λ x → plus f h ∙ x) law2 ⟩ 
+      (plus f h ∙ inr ∙ i) 
+    ≅⟨ (sym ass) ⟩ 
+      ((plus f h ∙ inr) ∙ i) 
+    ≅⟨ (cong (λ x → x ∙ i) law2) ⟩ 
+      (inr ∙ h) ∙ i
+    ≅⟨ ass ⟩ 
+      (inr ∙ h ∙ i) ∎
+  
   idcomp :  ∀{A B C D E F}
          → (f : Hom B C)(g : Hom A B)
          → (h : Hom E F)(i : Hom D E)
          → plus (f ∙ g) (h ∙ i) ≅ plus f h ∙ plus g i
-  idcomp  f g h i = proof 
-        (plus (f ∙ g) (h ∙ i)) 
-      ≅⟨ refl ⟩ 
-        [ (inl ∙ (f ∙ g)) , (inr ∙ (h ∙ i)) ] 
-      ≅⟨ {!   !} ⟩ 
-        {! _∙_  !} 
-      ≅⟨ {!   !} ⟩ 
-        {!   !} 
+  idcomp  f g h i = sym (law3 (compProof1 f g h i) (compProof2 f g h i))
 
 module Intercambio {cp : Coproducts}{p : Products} where
 
@@ -225,4 +273,4 @@ module Intercambio {cp : Coproducts}{p : Products} where
          → (h : Hom A D)(k : Hom B D)
          → ⟨ [ f , g ] , [ h , k ] ⟩ ≅ [ ⟨ f , h ⟩ , ⟨ g , k ⟩ ]
   intercambio f g h k = {! ⟨ [ f , g ] , [ h , k ] ⟩  !}
-  
+   
