@@ -268,9 +268,44 @@ module Intercambio {cp : Coproducts}{p : Products} where
 
    {- intercambio entre poducto y coproducto -}
 
+  aux1 : ∀{A B C D}
+         → (f : Hom A C)(g : Hom B C)
+         → (h : Hom A D)(k : Hom B D)
+         → (π₁ ∙ [ ⟨ f , h ⟩ , ⟨ g , k ⟩ ]) ∙ inl ≅ f
+  aux1 f g h k = proof 
+      ((π₁ ∙ [ ⟨ f , h ⟩ , ⟨ g , k ⟩ ]) ∙ inl) 
+    ≅⟨ ass ⟩ 
+      (π₁ ∙ ([ ⟨ f , h ⟩ , ⟨ g , k ⟩ ] ∙ inl)) 
+    ≅⟨ (cong (λ x → π₁ ∙ x) law1) ⟩ 
+      (π₁ ∙ ⟨ f , h ⟩) 
+    ≅⟨ lawp1 ⟩ 
+      f ∎
+
+  aux2 : ∀{A B C D}
+         → (f : Hom A C)(g : Hom B C)
+         → (h : Hom A D)(k : Hom B D)
+         → (π₁ ∙ [ ⟨ f , h ⟩ , ⟨ g , k ⟩ ]) ∙ inr ≅ g
+  aux2 f g h k = proof 
+      ((π₁ ∙ [ ⟨ f , h ⟩ , ⟨ g , k ⟩ ]) ∙ inr) 
+    ≅⟨ ass ⟩ 
+      (π₁ ∙ ([ ⟨ f , h ⟩ , ⟨ g , k ⟩ ] ∙ inr)) 
+    ≅⟨ (cong (λ x → π₁ ∙ x) law2) ⟩ 
+      (π₁ ∙ ⟨ g , k ⟩) 
+    ≅⟨ lawp1 ⟩ 
+      g ∎
+
+  iproof1 : ∀{A B C D}
+         → (f : Hom A C)(g : Hom B C)
+         → (h : Hom A D)(k : Hom B D)
+         → π₁ ∙ [ ⟨ f , h ⟩ , ⟨ g , k ⟩ ] ≅ [ f , g ]
+  iproof1 f g h k = law3 (aux1 f g h k) (aux2 f g h k)    
+
+
+-- _≅⟨_⟩_
+
   intercambio : ∀{A B C D}
          → (f : Hom A C)(g : Hom B C)
          → (h : Hom A D)(k : Hom B D)
          → ⟨ [ f , g ] , [ h , k ] ⟩ ≅ [ ⟨ f , h ⟩ , ⟨ g , k ⟩ ]
-  intercambio f g h k = {! ⟨ [ f , g ] , [ h , k ] ⟩  !}
+  intercambio f g h k = sym (lawp3 (iproof1 f g h k) {!   !})
    
