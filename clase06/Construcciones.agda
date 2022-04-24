@@ -281,6 +281,19 @@ module Intercambio {cp : Coproducts}{p : Products} where
     ≅⟨ lawp1 ⟩ 
       f ∎
 
+  caux1 : ∀{A B C D}
+         → (f : Hom A C)(g : Hom B C)
+         → (h : Hom A D)(k : Hom B D)
+         → (π₂ ∙ [ ⟨ f , h ⟩ , ⟨ g , k ⟩ ]) ∙ inl ≅ h
+  caux1 f g h k = proof 
+      ((π₂ ∙ [ ⟨ f , h ⟩ , ⟨ g , k ⟩ ]) ∙ inl) 
+    ≅⟨ ass ⟩ 
+      (π₂ ∙ ([ ⟨ f , h ⟩ , ⟨ g , k ⟩ ] ∙ inl)) 
+    ≅⟨ (cong (λ x → π₂ ∙ x) law1) ⟩ 
+      (π₂ ∙ ⟨ f , h ⟩) 
+    ≅⟨ lawp2 ⟩ 
+      h ∎
+
   aux2 : ∀{A B C D}
          → (f : Hom A C)(g : Hom B C)
          → (h : Hom A D)(k : Hom B D)
@@ -294,18 +307,35 @@ module Intercambio {cp : Coproducts}{p : Products} where
     ≅⟨ lawp1 ⟩ 
       g ∎
 
+  caux2 : ∀{A B C D}
+         → (f : Hom A C)(g : Hom B C)
+         → (h : Hom A D)(k : Hom B D)
+         → (π₂ ∙ [ ⟨ f , h ⟩ , ⟨ g , k ⟩ ]) ∙ inr ≅ k
+  caux2 f g h k = proof 
+      ((π₂ ∙ [ ⟨ f , h ⟩ , ⟨ g , k ⟩ ]) ∙ inr) 
+    ≅⟨ ass ⟩ 
+      (π₂ ∙ ([ ⟨ f , h ⟩ , ⟨ g , k ⟩ ] ∙ inr)) 
+    ≅⟨ (cong (λ x → π₂ ∙ x) law2) ⟩ 
+      (π₂ ∙ ⟨ g , k ⟩) 
+    ≅⟨ lawp2 ⟩ 
+      k ∎
+
   iproof1 : ∀{A B C D}
          → (f : Hom A C)(g : Hom B C)
          → (h : Hom A D)(k : Hom B D)
          → π₁ ∙ [ ⟨ f , h ⟩ , ⟨ g , k ⟩ ] ≅ [ f , g ]
   iproof1 f g h k = law3 (aux1 f g h k) (aux2 f g h k)    
 
+  iproof2 : ∀{A B C D}
+         → (f : Hom A C)(g : Hom B C)
+         → (h : Hom A D)(k : Hom B D)
+         → π₂ ∙ [ ⟨ f , h ⟩ , ⟨ g , k ⟩ ] ≅ [ h , k ]
+  iproof2 f g h k = law3 (caux1 f g h k) (caux2 f g h k) 
 
--- _≅⟨_⟩_
 
   intercambio : ∀{A B C D}
          → (f : Hom A C)(g : Hom B C)
          → (h : Hom A D)(k : Hom B D)
          → ⟨ [ f , g ] , [ h , k ] ⟩ ≅ [ ⟨ f , h ⟩ , ⟨ g , k ⟩ ]
-  intercambio f g h k = sym (lawp3 (iproof1 f g h k) {!   !})
+  intercambio f g h k = sym (lawp3 (iproof1 f g h k) (iproof2 f g h k))
    
