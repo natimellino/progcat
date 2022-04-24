@@ -34,6 +34,7 @@ module ObjTerminal where
     constructor term
     field t : ∀{X} → Hom X T
           law : ∀{X}{f : Hom X T} → t {X} ≅ f
+          -- law : ∀{X}{f : Hom I X} → i {X} ≅ f -> inicial
   open Terminal
   
 
