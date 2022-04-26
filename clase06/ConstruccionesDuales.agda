@@ -34,7 +34,8 @@ InitialIso : (I I' : Obj C)
             → (p : Initial C I)
             → (q : Initial C I')
             → Iso C (i p {I'})
-InitialIso I I' p q = {!   !}
+InitialIso {C = C} I I' p q with {! TerminalIso (C Op) I I' (TerminalInitialDuality p) (TerminalInitialDuality q)  !} 
+...| x = {!   !}
 
 
 --------------------------------------------------------

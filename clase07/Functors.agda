@@ -144,26 +144,23 @@ TreeF = {!!}
   es un bifunctor Hom : (C Op) ×C C → Sets
   -}
 
-module HomBifuntor where
+module HomBifuntor (C : Cat {a} {b}) where
 
-  -- open Cat C using () renaming (_∙_ to _∙c_)
+  open Cat C using () renaming (_∙_ to _∙c_)
 
-  -- Proof1 : {X : Obj C × Obj C} → (C : Cat) → (λ { (f , g) h → g (Cat C)._∙_ h (Cat C)._∙_ f }) (iden C , iden C) ≅ (λ x → x)
-  -- Proof1 C = {!   !} 
+  -- Proof1 : {X Y : Obj C × Obj C} → 
+  --          {f : Hom C (fst Y) (fst X) } →
+  --          {g : Hom C (snd X) (snd Y) } →
+  --          {h : Hom C (fst X) (snd X) } →  
+  --          ((λ { (f , g) h → g ∙c h ∙c f }) (iden C , iden C)) X ≅ (λ x → x) X
+  -- Proof1 {X} = {!   !} 
 
-  HomF : ∀{a}{b}{C : Cat {a} {b}} → Fun ((C Op) ×C C) (Categories.Sets.Sets {b})
-  HomF {C = C} = let open Cat C using () renaming (_∙_ to _∙c_) 
-    in
+  HomF : Fun ((C Op) ×C C) (Categories.Sets.Sets {b})
+  HomF = 
       functor 
         (λ x → Hom C (fst x) (snd x)) 
-        (λ {(f , g) h → g ∙c (h ∙c f)}) 
-        (proof 
-            ((λ { (f , g) h → g ∙c h ∙c f }) (iden C , iden C)) 
-          ≅⟨ {!   !} ⟩ 
-            {!   !} 
-          ≅⟨ {!   !} ⟩ 
-            {! (λ x → x)  !}
-        )
+       (λ {(f , g) h → g ∙c (h ∙c f)}) 
+        {!   !}
         {!   !}
 
 {-
@@ -179,17 +176,24 @@ _○_ {D = D}{E = E}{C = C} F G =
        open Cat D using () renaming (_∙_ to _∙d_)
        open Cat E using () renaming (_∙_ to _∙e_)
    in functor 
-    (OMap F ∘ OMap G) 
-     (HMap F ∘ HMap G) 
-     (proof         
-       HMap F (HMap G (iden C))       
-      ≅⟨ cong (HMap F) (fid G) ⟩
-       HMap F (iden D) 
-      ≅⟨ fid F ⟩
-       iden E
-     ∎) 
-     {!   !}
-    
+      (OMap F ∘ OMap G) 
+      (HMap F ∘ HMap G) 
+      (proof         
+        HMap F (HMap G (iden C))       
+       ≅⟨ cong (HMap F) (fid G) ⟩
+        HMap F (iden D) 
+       ≅⟨ fid F ⟩
+        iden E
+      ∎)
+     (proof 
+        {!   !} 
+      ≅⟨ {!   !} ⟩ 
+        {!   !} 
+      ≅⟨ {!   !} ⟩ 
+        {!   !} ∎
+     
+     )
+  -- _≅⟨_⟩_
 infixr 10 _○_
 
 --------------------------------------------------
@@ -240,8 +244,30 @@ isomorfismo en C, entonces (HMap F f) es un isomorfismo en D.
 open import Categories.Iso
 
 FunIso : (F : Fun C D) → ∀{X Y}(f : Hom C X Y)
-       → Iso C f → Iso D (HMap F f)
-FunIso  = {! !}
+       → (is : Iso C f) → Iso D (HMap F f)
+FunIso {C = C} {D = D} (functor OMap₁ HMap₁ fid₁ fcomp₁) f (iso inv rinv linv) = 
+  let open Cat D using () renaming (_∙_ to _∙d_)
+      open Cat C using () renaming (_∙_ to _∙c_)
+  in
+    iso 
+      (HMap₁ inv) 
+      (proof 
+          (HMap₁ f ∙d HMap₁ inv) 
+        ≅⟨ sym fcomp₁ ⟩ 
+          HMap₁ (f ∙c inv) 
+        ≅⟨ cong HMap₁ rinv ⟩ 
+          HMap₁ (iden C) 
+        ≅⟨ fid₁ ⟩ 
+          (iden D) ∎
+      ) 
+      (proof 
+          HMap₁ inv ∙d HMap₁ f
+        ≅⟨ sym fcomp₁ ⟩          
+          HMap₁ (inv ∙c f)        
+        ≅⟨ cong HMap₁ linv ⟩
+          HMap₁ (iden C)
+        ≅⟨ fid₁ ⟩          
+          (iden D) ∎)
 
 --------------------------------------------------
 {- Ejercicio EXTRA: Sea C una categoría con productos. Probar
