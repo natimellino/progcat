@@ -34,8 +34,8 @@ InitialIso : (I I' : Obj C)
             → (p : Initial C I)
             → (q : Initial C I')
             → Iso C (i p {I'})
-InitialIso {C = C} I I' p q with {! TerminalIso (C Op) I I' (TerminalInitialDuality p) (TerminalInitialDuality q)  !} 
-...| x = {!   !}
+InitialIso {C = C} I I' p q with TerminalIso (C Op) I I' (InitialTerminalDuality p) (InitialTerminalDuality q) 
+InitialIso {C = C} I I' p q | iso inv₁ rinv₁ linv₁ = iso inv₁ linv₁ rinv₁
 
 
 --------------------------------------------------------
@@ -70,7 +70,8 @@ open Coproducts
 
  {- Probar que los coproductos son únicos hasta un isomorfismo usando dualidad -}
 CoproductIso : ∀{A B}(X Y : Coproducts C) → Iso C ([_,_] X {A} {B} (inl Y) (inr Y))
-CoproductIso X Y = {!   !}
+CoproductIso {C = C} X Y with ProductIso (C Op) (CoproductProductDuality X) (CoproductProductDuality Y)
+CoproductIso {C = C} X Y | iso inv₁ rinv₁ linv₁ = iso inv₁ linv₁ rinv₁
 
 
 --------------------------------------------------
