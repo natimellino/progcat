@@ -148,25 +148,47 @@ module HomBifuntor (C : Cat {a} {b}) where
 
   open Cat C using () renaming (_∙_ to _∙c_)
 
-  -- Proof1 : {X Y : Obj C × Obj C} → 
-  --          {f : Hom C (fst Y) (fst X) } →
-  --          {g : Hom C (snd X) (snd Y) } →
-  --          {h : Hom C (fst X) (snd X) } →  
-  --          ((λ { (f , g) h → g ∙c h ∙c f }) (iden C , iden C)) X ≅ (λ x → x) X
-  -- Proof1 {X} = {!   !} 
+  Proof1 : {X : Obj C × Obj C} →
+           (h : Hom C (fst X) (snd X)) →
+           iden C ∙c (h ∙c iden C) ≅ h
+  Proof1 h = proof 
+      (iden C ∙c (h ∙c iden C)) 
+    ≅⟨ (cong (λ x → iden C ∙c x) (idr C)) ⟩ 
+      (iden C ∙c h) 
+    ≅⟨ (idl C) ⟩ 
+      h ∎
+
+  Proof2 : {X Y Z : Obj C × Obj C} →
+           {f : Hom C (fst Z) (fst Y) × Hom C (snd Y) (snd Z)} →
+           {g : Hom C (fst Y) (fst X) × Hom C (snd X) (snd Y)} →
+           (h : Hom C (fst X) (snd X)) →
+           ((snd f ∙c snd g) ∙c h) ∙c (fst g ∙c fst f) ≅
+           (snd f ∙c (snd g ∙c h) ∙c fst g) ∙c fst f
+  Proof2 {f = f} {g = g} h = proof 
+      ((snd f ∙c snd g) ∙c h) ∙c (fst g ∙c fst f) 
+    ≅⟨ cong (λ x → x ∙c fst g ∙c fst f) (ass C) ⟩ 
+      (snd f ∙c (snd g ∙c h)) ∙c (fst g ∙c fst f) 
+    ≅⟨ sym (ass C) ⟩ 
+      (((snd f ∙c snd g ∙c h) ∙c fst g) ∙c fst f) 
+    ≅⟨ (cong (λ x → x ∙c fst f) (ass C)) ⟩ 
+      (snd f ∙c (snd g ∙c h) ∙c fst g) ∙c fst f 
+    ∎ 
+
 
   HomF : Fun ((C Op) ×C C) (Categories.Sets.Sets {b})
   HomF = 
       functor 
         (λ x → Hom C (fst x) (snd x)) 
-       (λ {(f , g) h → g ∙c (h ∙c f)}) 
-        {!   !}
-        {!   !}
-
+        (λ {(f , g) h → g ∙c (h ∙c f)}) 
+        (ext Proof1)
+        (ext {!   !})
+        
 {-
 {X : Obj C × Obj C} →
       (λ { (f , g) h → g ∙c h ∙c f }) (iden C , iden C) ≅ (λ x → x)
 -}
+
+-- _≅⟨_⟩_
 
 --------------------------------------------------
 {- Composición de funtores -}
@@ -185,15 +207,16 @@ _○_ {D = D}{E = E}{C = C} F G =
        ≅⟨ fid F ⟩
         iden E
       ∎)
-     (proof 
-        {!   !} 
-      ≅⟨ {!   !} ⟩ 
-        {!   !} 
-      ≅⟨ {!   !} ⟩ 
-        {!   !} ∎
-     
+     ( λ { _ _ _ f g } →
+        (proof 
+          HMap F (HMap G (f ∙c g)) 
+        ≅⟨ cong (λ x → HMap F x) (fcomp G) ⟩ 
+          HMap F (HMap G f ∙d HMap G g) 
+        ≅⟨ fcomp F ⟩ 
+          HMap F (HMap G f) ∙e HMap F (HMap G g) ∎
+        )
      )
-  -- _≅⟨_⟩_
+
 infixr 10 _○_
 
 --------------------------------------------------
