@@ -165,19 +165,45 @@ module Ejemplos where
  concatNat : NatT (ListF ○ ListF) ListF
  concatNat = natural (λ- concat) (ext (λ xs → concatNaturality xs)) 
 
- --
 -- Ejercicio: probar que length es una transformación natural
 -- ¿Entre qué funtores es una transformación natural?
- lengthNat : NatT ListF {!   !}
- lengthNat = {!   !}
+
+ lengthNaturality : {X Y : Set} {f : X → Y} (xs : List X) →
+                    foldr (λ _ → suc) 0 xs ≅
+                    foldr (λ _ → suc) 0 (mapList f xs)
+ lengthNaturality {f = f} [] = refl
+ lengthNaturality {f = f} (x ∷ xs) = 
+  proof
+      suc (foldr (λ _ → suc) 0 xs) 
+    ≅⟨ cong suc (lengthNaturality xs) ⟩
+      suc (foldr (λ _ → suc) 0 (mapList f xs)) 
+    ≅⟨ refl ⟩
+      foldr (λ _ → suc) 0 (mapList f (x ∷ xs)) 
+   ∎ 
+
+ lengthNat : NatT ListF (K ℕ)
+ lengthNat = natural 
+              (λ- length) 
+              (ext (λ x → lengthNaturality x))
 
 -- Ejercicio: probar que safehead es una transformación natural
  safeHead : {A : Set} → List A → Maybe A
  safeHead [] = nothing
  safeHead (x ∷ xs) = just x
 
+ -- Duda: porque esta funcion tira error?
+ -- headNaturality : {X Y : Set} {f : X → Y} (xs : List X) →
+ --                  maybe (λ x₁ → just (f x₁)) nothing (safeHead xs) ≅
+ --                  safeHead (mapList f xs)
+ -- headNaturality [] = refl
+ -- headNaturality (x ∷ xs) = refl                  
+
  headNat : NatT ListF MaybeF
- headNat = {!   !}
+ headNat = natural 
+            (λ- safeHead)
+            (ext (λ { [] → refl
+                    ; (x ∷ xs) → refl })) 
+            -- (ext (λ x → headNaturality x))
  
  --
 --------------------------------------------------
