@@ -285,16 +285,23 @@ compHNat : ∀{F G : Fun C D}{J K : Fun D E}
 compHNat {D = D}{E = E}{F = F}{G} {J}{K} η ε = 
    let open Cat E
        open Cat D using () renaming (_∙_ to _∙D_)
-   in natural {!   !}
+   in natural (λ X → (cmp ε (OMap G X)) ∙ HMap J (cmp η X))
               λ {X Y f} → 
               proof 
-              {!   !}  ≅⟨  {!   !} ⟩
-              {!   !}  ≅⟨  {!   !} ⟩
-              {!   !}  ≅⟨  {!   !} ⟩
-              {!   !}  ≅⟨  {!   !} ⟩
-              {!   !}  ≅⟨  {!   !} ⟩
-              {!   !}  ≅⟨  {!   !} ⟩
-              {!   !}  ≅⟨  {!   !} ⟩
+                HMap (K ○ G) f ∙ (cmp ε (OMap G X) ∙ HMap J (cmp η X))  
+              ≅⟨  cong (λ x → (HMap (K ○ G) f) ∙ x) (sym (nat ε)) ⟩
+                HMap (K ○ G) f ∙ (HMap K (cmp η X) ∙ cmp ε (OMap F X))  
+              ≅⟨  {!   !} ⟩
+                {!   !}  
+              ≅⟨  {!   !} ⟩
+                {!   !}  
+              ≅⟨  {!   !} ⟩
+                {!   !}  
+              ≅⟨  {!   !} ⟩
+                {!   !}  
+              ≅⟨  {!   !} ⟩
+                {!   !}  
+              ≅⟨  {!   !} ⟩
               {!   !}
               ∎
 
