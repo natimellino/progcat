@@ -168,7 +168,7 @@ module Ejemplos where
  --
 -- Ejercicio: probar que length es una transformación natural
 -- ¿Entre qué funtores es una transformación natural?
- lengthNat : NatT ListF {! Cuadrado  !}
+ lengthNat : NatT ListF {!   !}
  lengthNat = {!   !}
 
 -- Ejercicio: probar que safehead es una transformación natural
