@@ -142,14 +142,33 @@ module Ejemplos where
   implícita. El operador λ- convierte una función implícita en explícita.
 -}
 
+ mapList-distr : {X Y : Set}{f : X → Y}(xs ys : List X) → 
+                mapList f (xs ++ ys) ≅ mapList f xs ++ mapList f ys 
+ mapList-distr {f} [] ys = refl
+ mapList-distr {f = f} (x ∷ xs) ys = cong (λ y → f x ∷ y) (mapList-distr xs ys)
+
+ concatNaturality : {X Y : Set}{f : X → Y}(xs : List (List X)) →
+                     mapList f (foldr _++_ [] xs) ≅
+                     foldr _++_ [] (mapList (mapList f) xs)
+ concatNaturality [] = refl
+ concatNaturality {f = f} (xs ∷ xss) = proof 
+      mapList f (xs ++ (foldr _++_ [] xss)) 
+    ≅⟨ mapList-distr xs ((foldr _++_ [] xss)) ⟩
+      mapList f xs ++ mapList f (foldr _++_ [] xss) 
+    ≅⟨ cong (λ x → mapList f xs ++ x) (concatNaturality xss) ⟩
+      mapList f xs ++ (foldr _++_ [] (mapList (mapList f) xss)) 
+    ≅⟨ refl ⟩
+      foldr _++_ [] (mapList (mapList f) (xs ∷ xss)) 
+   ∎
+
 -- Ejercicio: probar que concat es una transformación natural
  concatNat : NatT (ListF ○ ListF) ListF
- concatNat = {!   !} 
+ concatNat = natural (λ- concat) (ext (λ xs → concatNaturality xs)) 
 
  --
 -- Ejercicio: probar que length es una transformación natural
 -- ¿Entre qué funtores es una transformación natural?
- lengthNat : NatT {!   !} {!   !}
+ lengthNat : NatT ListF {! Cuadrado  !}
  lengthNat = {!   !}
 
 -- Ejercicio: probar que safehead es una transformación natural
@@ -307,4 +326,4 @@ module FunctorCoproduct (cop : Coproducts C) where
 
  copairF : ∀{F G H K} →
           (NatT {C = D} F H) → (NatT G K) → NatT (F +F G) (H +F K)
- copairF = {!   !} 
+ copairF = {!   !}  
