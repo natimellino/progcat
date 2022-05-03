@@ -289,14 +289,14 @@ compHNat {D = D}{E = E}{F = F}{G} {J}{K} η ε =
               λ {X Y f} → 
               proof 
                 HMap (K ○ G) f ∙ (cmp ε (OMap G X) ∙ HMap J (cmp η X))  
-              ≅⟨  cong (λ x → (HMap (K ○ G) f) ∙ x) (sym (nat ε)) ⟩
-                HMap (K ○ G) f ∙ (HMap K (cmp η X) ∙ cmp ε (OMap F X))  
-              ≅⟨  {!   !} ⟩
-                {!   !}  
-              ≅⟨  {!   !} ⟩
-                {!   !}  
-              ≅⟨  {!   !} ⟩
-                {!   !}  
+              ≅⟨  sym ass ⟩
+                (HMap (K ○ G) f ∙ cmp ε (OMap G X)) ∙ HMap J (cmp η X)  
+              ≅⟨  congl (nat ε) ⟩
+                (cmp ε (OMap G Y) ∙ HMap J (HMap G f)) ∙ HMap J (cmp η X)  
+              ≅⟨  ass ⟩
+                cmp ε (OMap G Y) ∙ (HMap J (HMap G f) ∙ HMap J (cmp η X))  
+              ≅⟨  congr (sym (fcomp J)) ⟩
+                cmp ε (OMap G Y) ∙ HMap J (HMap G f ∙D cmp η X)  
               ≅⟨  {!   !} ⟩
                 {!   !}  
               ≅⟨  {!   !} ⟩
