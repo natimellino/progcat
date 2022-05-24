@@ -207,5 +207,4 @@ fusion : ∀{A B} → (f : Hom (OMap A) A)
                 → (h : Hom A B) 
                 → (h ∙ f ≅ g ∙ HMap h) 
                 → h ∙ fold f ≅ fold g
-fusion {A} {B} f g h p = {!   !}
-
+fusion {A} {B} f g h p = cong homo-base (alg-fusion (falgebra A f) (falgebra B g) (homo h p))
