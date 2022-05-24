@@ -30,7 +30,7 @@ open import Data.Sum renaming (_⊎_ to _+_) hiding ([_,_])
 
 -- Nat X = 1 + X
 Nat : Fun Sets Sets
-Nat = ?
+Nat = {!   !}
 
 module Nat where
 
@@ -86,7 +86,7 @@ module Nat where
 -}
 
 L : (A : Set) → Fun (Sets {lzero}) (Sets {lzero})
-L A = ?
+L A = {!   !}
 
 module Listas (A : Set) where
 

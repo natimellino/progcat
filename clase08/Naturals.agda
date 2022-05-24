@@ -392,9 +392,9 @@ module FunctorCoproduct (cop : Coproducts C) where
  -- Ejercicio: Leer la definición de coproducto de funtores _+F_
  -- y definir copairF 
 
---  copairF : ∀{F G H K} →
---           (NatT {C = D} F H) → (NatT G K) → NatT (F +F G) (H +F K)
---  copairF {F = F} {G} {H} {K} (natural cmp₁ nat₁) (natural cmp₂ nat₂) =
---    natural 
---      (λ X → [ inl ∙ (cmp₁ X) , inr ∙ (cmp₂ X) ]) 
---      {!   !}
+ -- copairF : ∀{F G H K} →
+ --          (NatT {C = D} F H) → (NatT G K) → NatT (F +F G) (H +F K)
+ -- copairF {F = F} {G} {H} {K} (natural cmp₁ nat₁) (natural cmp₂ nat₂) =
+ --   natural 
+ --     (λ X → [ inl ∙ (cmp₁ X) , inr ∙ (cmp₂ X) ]) 
+ --     {!   !}
