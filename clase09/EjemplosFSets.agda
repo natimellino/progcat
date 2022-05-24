@@ -30,7 +30,7 @@ open import Data.Sum renaming (_⊎_ to _+_) hiding ([_,_])
 
 -- Nat X = 1 + X
 Nat : Fun Sets Sets
-Nat = {!   !}
+Nat = (K ⊤) +F IdF
 
 module Nat where
 
@@ -42,10 +42,10 @@ module Nat where
 
   -- definir constructores
   0N : μF
-  0N = {!   !}
+  0N = α (inj₁ tt)
 
   sucN : μF → μF
-  sucN x = {!   !}
+  sucN x = α (inj₂ x)
 
 --------------------------------------------------
 {- Probar que los naturales, junto con foldℕ son el álgebra inicial de Nat -}
@@ -55,7 +55,7 @@ module Nat where
   foldℕ s z (suc n) = s (foldℕ s z n)
 
   μNat : F-algebra
-  μNat = {!   !}
+  μNat = falgebra ℕ {!   !}
 
   init-homo-base : (k : F-algebra) → ℕ → carrier k 
   init-homo-base k = foldℕ {!   !} {!   !}
