@@ -12,11 +12,6 @@ open import Data.Nat
 open import Data.Bool
 open import Relation.Binary.PropositionalEquality using (_≡_ ; refl ; cong ; cong₂)
 
--- Trees with node values of type N and leaf values of type L
-data Tree (N : Set): Set₁ where
-  leaf : Tree N
-  node : Tree N → N → Tree N → Tree N
-
 -- Universo para los tipos de datos Regulares
 {-
  Símbolos : \o+ ⊕ , \ox  ⊗ , \u+ ⊎ , \[[ \]]  ⟦ ⟧      
@@ -236,14 +231,23 @@ TREE A = μ TreeF A
 
 -- Isomorfismo entre Tree A y TREE A
 toTree : ∀ {A} → TREE A → Tree A
-toTree x = {!!}
+toTree ⟨ inj₁ tt ⟩ = leaf
+toTree ⟨ inj₂ (fst , snd) ⟩ = node (toTree fst) (proj₁ snd) (toTree (proj₂ snd))
 
 fromTree : ∀ {A} → Tree A → TREE A 
-fromTree x = {!!} 
+fromTree leaf = ⟨ inj₁ tt ⟩
+fromTree (node x x₁ x₂) = ⟨ (inj₂ ((fromTree x) , (x₁ , (fromTree x₂)))) ⟩ 
+
+
+{-
+-- Derivamos la definición de foldL a partir de fold
+foldL : ∀ {A B} → B → (A × B → B) → List A → B
+foldL {A} n c xs = fold  ([_,_] (λ _ → n) c)   (fromList xs) 
+-}
 
 -- Definir foldT en términos de foldT
 foldT : ∀ {A B} → B → (B × (A × B) → B) → Tree A → B
-foldT l n t = {!!} 
+foldT l n t = fold ([_,_] (λ _ → l) n)  (fromTree t)  -- ta mal
 
 
 -- Ejercicio 2) Definir una función genérica depth, que calcule la profundidad de un
@@ -272,3 +276,4 @@ sum {F} = {!!}
 
 
 
+ 
