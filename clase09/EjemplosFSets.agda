@@ -55,10 +55,10 @@ module Nat where
   foldℕ s z (suc n) = s (foldℕ s z n)
 
   μNat : F-algebra
-  μNat = falgebra ℕ {!   !}
+  μNat = falgebra ℕ [ (λ _ → zero) , (λ x → suc x) ]
 
   init-homo-base : (k : F-algebra) → ℕ → carrier k 
-  init-homo-base k = foldℕ {!   !} {!   !}
+  init-homo-base ( record { carrier = carrier ; algebra = algebra } ) = foldℕ  (λ f x → f x) (λ x → algebra ([ {!   !} , {!   !} ] {!   !})) {!   !}
 
   lema-init-homo-prop : {X : F-algebra} → (n : OMap ℕ) → (init-homo-base X ∘ algebra μNat) n ≅
                                        (algebra X ∘ HMap (init-homo-base X)) n
