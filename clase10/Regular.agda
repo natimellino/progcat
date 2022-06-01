@@ -247,21 +247,34 @@ foldL {A} n c xs = fold  ([_,_] (λ _ → n) c)   (fromList xs)
 
 -- Definir foldT en términos de foldT
 foldT : ∀ {A B} → B → (B × (A × B) → B) → Tree A → B
-foldT l n t = fold ([_,_] (λ _ → l) n)  (fromTree t)  -- ta mal
+foldT l n t = fold ([_,_] (λ _ → l) n)  (fromTree t)
 
 
 -- Ejercicio 2) Definir una función genérica depth, que calcule la profundidad de un
 -- dato dado, es decir la cantidad de llamadas recursivas.
 
+max : ℕ → ℕ → ℕ
+max zero y = y
+max x zero = x
+max (suc x) (suc y) = suc (max x y)
+
 depth : ∀ {F : Regular} {A : Set} → μ F A → ℕ
 depth {F} {A} = fold {F} (alg {F}) 
    where alg : ∀ {F'} → Algebra F' A ℕ
-         alg {F'}  x = {!!} 
+         alg {U} x = 0
+         alg {K A} x = 0
+         alg {P} x = 1
+         alg {F' ⊗ F''} (fst , snd) = (alg {F'} fst) + (alg {F''} snd)
+         alg {F' ⊕ F''} (inj₁ x) = alg {F'} x
+         alg {F' ⊕ F''} (inj₂ y) = alg {F''} y
+         alg {I} x = x 
 
 
 -- función que calcula la altura de un árbol
 height : ∀ {A} → Tree A → ℕ
-height t = pred (depth (fromTree t))  
+height t = pred (depth (fromTree t))
+
+-- node (node (node leaf 4 leaf) 2 (node leaf 5 leaf)) 1 (node leaf 3 leaf)
 
 
 -- Ejercicio 3)
@@ -269,7 +282,13 @@ height t = pred (depth (fromTree t))
 -- en una estructura de naturales. 
 
 sum : ∀ {F : Regular} → μ F ℕ  → ℕ
-sum {F} = {!!}  
+sum {U} x = 0
+sum {K A} ⟨ x ⟩ = 0
+sum {P} ⟨ x ⟩ = x
+sum {F ⊗ F₁} ⟨ fst , snd ⟩ = {!   !} --{! (sum {F} fst) + (sum {F₁} snd)  !}
+sum {F ⊕ F₁} ⟨ inj₁ x ⟩ = sum {!   !}
+sum {F ⊕ F₁} ⟨ inj₂ y ⟩ = {!   !}
+sum {I} x = {!   !}  
 
 
 
