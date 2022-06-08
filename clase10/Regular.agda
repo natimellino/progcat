@@ -49,14 +49,14 @@ data Regular : Set₁ where
 BoolF : Regular
 BoolF = U ⊕ U
 
+
 toBool : ∀ {p r} →  ⟦ BoolF ⟧ᵣ p r → Bool
-toBool (inj₁ x) = true
-toBool (inj₂ y) = false 
+toBool (inj₁ tt) = true
+toBool (inj₂ tt) = false
 
 fromBool : ∀ {p r} → Bool → ⟦ BoolF ⟧ᵣ p r
-fromBool false = inj₂ tt
-fromBool true = inj₁ tt 
-
+fromBool false = inj₁ tt
+fromBool true = inj₂ tt
 
 -- ¿Podremos hacer los mismo con listas? 
 open import Data.List hiding (map ; sum)
@@ -65,13 +65,9 @@ open import Data.List hiding (map ; sum)
 -- List A B = 1 + A × B
 -- List = 1 + P × I
 
-
+-- No podemos definirlo, falta modelar recursión
 toList' : ∀ {r} {A} → ⟦ U ⊕ (P ⊗ I) ⟧ᵣ A r → List A 
 toList' x = {!  !} 
-
-
-
-
 
 
 
@@ -133,13 +129,13 @@ listIso = iso fromList iso1 iso2
 -- Definición genérica de map para los tipos de datos regulares
 
 map : ∀ {A B C D} → (F : Regular) → (A → B) → (C → D) → ⟦ F ⟧ᵣ A C → ⟦ F ⟧ᵣ B D
-map U f g x = x
-map (K A) f g x = x
-map P f g x = f x
-map (F ⊗ F₁) f g (fst , snd) = (map F f g fst) , (map F₁ f g snd)
-map (F ⊕ F₁) f g (inj₁ x) = inj₁ (map F f g x)
-map (F ⊕ F₁) f g (inj₂ y) = inj₂ (map F₁ f g y)
-map I f g x = g x 
+map U f g tt = tt
+map (K A) f g d = d
+map P f g d = f d 
+map (F ⊗ G) f g d = map F f g (proj₁ d) , map G f g (proj₂ d) 
+map (F ⊕ G) f g (inj₁ x) = inj₁ (map F f g x)
+map (F ⊕ G) f g (inj₂ x) = inj₂ (map G f g x)
+map I f g d = g d 
 
 -- Definición de fold 
 -- fold (h) . inF = h . F fold (h)
@@ -187,7 +183,7 @@ elements {F} {A} = fold {F} (alg {F})
            alg {F' ⊕ F''} (inj₁ x) = alg {F'} x
            alg {F' ⊕ F''} (inj₂ y) = alg {F''} y
            alg {I} x = x
-           
+       
 
 
 sl : ℕ
@@ -196,7 +192,7 @@ sl = elements (fromList (2 ∷ 4 ∷ 5 ∷ []))
 
 -- Derivamos la definición de foldL a partir de fold
 foldL : ∀ {A B} → B → (A × B → B) → List A → B
-foldL {A} n c xs = fold  ([_,_] (λ _ → n) c)   (fromList xs) 
+foldL {A} n c xs = fold ([_,_] (λ _ → n) c) (fromList xs) 
 
 
 
