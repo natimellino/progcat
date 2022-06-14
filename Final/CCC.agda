@@ -83,9 +83,9 @@ record CCC : Set (a ⊔ b) where
   -- Interpretacion para términos como flechas CCC
 
   tterms : ∀ {n : ℕ} {τ} → (Γ : Ctx n) → Term Γ τ → Hom (tctx Γ) (ttype τ)
-  tterms Γ (Var v x) = {!   !}
+  tterms Γ (Var v x) = {!   !} -- no se :'(
   tterms Γ (t ⊕ u) = apply ∙ ⟨ (tterms Γ t) , (tterms Γ u) ⟩
   tterms Γ (t ×ₚ u) = ⟨ tterms Γ t , tterms Γ u ⟩
-  tterms Γ (p₁ t) = π₁ ∙ tterms Γ t 
+  tterms Γ (p₁ t) = π₁ ∙ (tterms Γ t) 
   tterms Γ (p₂ t) = π₂ ∙ (tterms Γ t)
   tterms Γ (lam σ t) = curry (tterms (σ ∷ Γ) t)
