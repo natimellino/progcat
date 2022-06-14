@@ -1,8 +1,6 @@
 open import Categories
 open import Categories.Products
 open import Categories.Terminal
-open import Final.SimpleTyped
-open import Data.Nat using (ℕ; zero; suc; _+_; _≤?_; _≥_)
 
 module Final.CCC {a}{b}{C : Cat {a}{b}}
                                     (hasProducts : Products C)
@@ -33,9 +31,57 @@ record CCC : Set (a ⊔ b) where
   map⇒ : ∀{X Y Z} → Hom X Z → Hom (Y ⇒ X) (Y ⇒ Z)
   map⇒ f = curry (f ∙ apply)
 
--- π : ∀{X Y Z} → (Γ : Ctx n) → ℕ → () 
+  open import Data.Nat using (ℕ; zero; suc; _+_; _≤?_; _≥_)
+  open import Data.Vec using (Vec; []; _∷_; lookup)
+  open import Data.Fin using (Fin; zero; suc; toℕ)
+  open import Relation.Binary.PropositionalEquality using (_≡_; refl; cong; cong₂)
 
-eval : {n : ℕ} → (Γ : Ctx n) → LamTerm → CCC
-eval Γ (Var x) = {! x  !}
-eval Γ (t ⊕ t₁) = {!   !}
-eval Γ (Abs x t) = {!   !}
+  infixr 30 _⇛_
+  infixr 30 _⊗_
+
+  data Ty : Set where
+      base : Ty
+      _⊗_ : Ty → Ty → Ty
+      _⇛_ : Ty → Ty → Ty
+
+  data LamTerm : Set where
+      Var : ℕ → LamTerm -- var
+      _⊕_ : LamTerm → LamTerm → LamTerm -- application
+      _,_ : LamTerm → LamTerm → LamTerm -- prod
+      fs : LamTerm → LamTerm -- fst
+      sn : LamTerm → LamTerm -- snd
+      Abs : Ty → LamTerm → LamTerm -- abstraction
+
+  Ctx : ℕ → Set
+  Ctx = Vec Ty
+
+  data Term {n} (Γ : Ctx n) : Ty → Set where
+    Var : ∀ {τ} (v : Fin n) → τ ≡ lookup Γ v → Term Γ τ
+    _⊕_ : ∀ {σ τ} → Term Γ (σ ⇛ τ) → Term Γ σ → Term Γ τ
+    _p_ : ∀ {σ τ} → Term Γ σ → Term Γ τ → Term Γ (σ ⊗ τ)
+    lam : ∀ σ {τ} → Term (σ ∷ Γ) τ → Term Γ (σ ⇛ τ)
+
+  -- Interpretación para tipos
+
+  ttype : Ty → Obj
+  ttype base = T
+  ttype (t ⊗ u) = (ttype t) × (ttype u)
+  ttype (t ⇛ u) = (ttype t) ⇒ (ttype u)
+
+  -- Interpretación para contextos
+
+  tctx : {n : ℕ} → (Γ : Ctx n) → Obj
+  tctx [] = T
+  tctx (t ∷ Γ) = (tctx Γ) × (ttype t)
+
+  find : ∀ {n : ℕ} (m : Fin n) → (Γ : Ctx n) → Hom (tctx Γ) (ttype((lookup Γ m)))
+  find Data.Fin.0F Γ = {!   !}
+  find (suc m) Γ = {!   !}
+
+  -- Interpretacion para términos
+
+  tterms : ∀ {n : ℕ} {τ} → (Γ : Ctx n) → Term Γ τ → Hom (tctx Γ) (ttype τ)
+  tterms Γ (Var v x) = {!   !}
+  tterms Γ (t ⊕ u) = apply ∙ ⟨ (tterms Γ t) , (tterms Γ u) ⟩
+  tterms Γ (t p u) = ⟨ tterms Γ t , tterms Γ u ⟩
+  tterms Γ (lam σ t) = curry (tterms (σ ∷ Γ) t)
