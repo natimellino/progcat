@@ -65,27 +65,27 @@ record CCC : Set (a ⊔ b) where
 
   -- Interpretación para tipos como objetos CCC
 
-  ttype : Ty → Obj
-  ttype base = T
-  ttype (t ⊗ u) = (ttype t) × (ttype u)
-  ttype (t ⇛ u) = (ttype t) ⇒ (ttype u)
+  ⟦_⟧ₜ : Ty → Obj
+  ⟦ base ⟧ₜ = T
+  ⟦ (t ⊗ u) ⟧ₜ = ⟦ t ⟧ₜ × ⟦ u ⟧ₜ
+  ⟦ (t ⇛ u) ⟧ₜ = ⟦ t ⟧ₜ ⇒ ⟦ u ⟧ₜ
 
   -- Interpretación para contextos como objetos CCC
 
-  tctx : {n : ℕ} → (Γ : Ctx n) → Obj
-  tctx [] = T
-  tctx (t ∷ Γ) = (tctx Γ) × (ttype t)
+  ⟦_⟧ₓ : {n : ℕ} → (Γ : Ctx n) → Obj
+  ⟦ [] ⟧ₓ = T
+  ⟦ (t ∷ Γ) ⟧ₓ = ⟦ Γ ⟧ₓ × ⟦ t ⟧ₜ
 
-  find : ∀ {n : ℕ} (m : Fin n) → (Γ : Ctx n) → Hom (tctx Γ) (ttype((lookup Γ m)))
+  find : ∀ {n : ℕ} (m : Fin n) → (Γ : Ctx n) → Hom ⟦ Γ ⟧ₓ ⟦ lookup Γ m ⟧ₜ
   find Data.Fin.0F Γ = {!   !}
   find (suc m) Γ = {!   !}
 
   -- Interpretacion para términos como flechas CCC
 
-  tterms : ∀ {n : ℕ} {τ} → (Γ : Ctx n) → Term Γ τ → Hom (tctx Γ) (ttype τ)
-  tterms Γ (Var v x) = {!   !} -- no se :'(
-  tterms Γ (t ⊕ u) = apply ∙ ⟨ (tterms Γ t) , (tterms Γ u) ⟩
-  tterms Γ (t ×ₚ u) = ⟨ tterms Γ t , tterms Γ u ⟩
-  tterms Γ (p₁ t) = π₁ ∙ (tterms Γ t) 
-  tterms Γ (p₂ t) = π₂ ∙ (tterms Γ t)
-  tterms Γ (lam σ t) = curry (tterms (σ ∷ Γ) t)
+  ⟦_⊢_⟧ₗ : ∀ {n : ℕ} {τ} → (Γ : Ctx n) → Term Γ τ → Hom ⟦ Γ ⟧ₓ ⟦ τ ⟧ₜ
+  ⟦ Γ ⊢ (Var v x) ⟧ₗ = {!   !} -- no se :'(
+  ⟦ Γ ⊢ (t ⊕ u) ⟧ₗ = apply ∙ ⟨ ⟦ Γ ⊢ t ⟧ₗ , ⟦ Γ ⊢ u ⟧ₗ ⟩
+  ⟦ Γ ⊢ (t ×ₚ u) ⟧ₗ = ⟨ ⟦ Γ ⊢ t ⟧ₗ , ⟦ Γ ⊢ u ⟧ₗ ⟩
+  ⟦ Γ ⊢ (p₁ t) ⟧ₗ = π₁ ∙ ⟦ Γ ⊢ t ⟧ₗ 
+  ⟦ Γ ⊢ (p₂ t) ⟧ₗ = π₂ ∙ ⟦ Γ ⊢ t ⟧ₗ
+  ⟦ Γ ⊢ (lam σ t) ⟧ₗ = curry ⟦ (σ ∷ Γ) ⊢ t ⟧ₗ
