@@ -41,32 +41,29 @@ record CCC : Set (a ⊔ b) where
 
   data Ty : Set where
       base : Ty
+      -- tipo unit ?
+      -- U : Ty
       _⊗_ : Ty → Ty → Ty
       _⇛_ : Ty → Ty → Ty
-
-  data LamTerm : Set where
-      Var : ℕ → LamTerm -- var
-      _⊕_ : LamTerm → LamTerm → LamTerm -- application
-      _,_ : LamTerm → LamTerm → LamTerm -- prod
-      fs : LamTerm → LamTerm -- fst
-      sn : LamTerm → LamTerm -- snd
-      Abs : Ty → LamTerm → LamTerm -- abstraction
 
   Ctx : ℕ → Set
   Ctx = Vec Ty
 
   data Term {n} (Γ : Ctx n) : Ty → Set where
-    Var : ∀ {τ} (v : Fin n) → τ ≡ lookup Γ v → Term Γ τ
-    _⊕_ : ∀ {σ τ} → Term Γ (σ ⇛ τ) → Term Γ σ → Term Γ τ
-    _×ₚ_ : ∀ {σ τ} → Term Γ σ → Term Γ τ → Term Γ (σ ⊗ τ)
-    p₁ :  ∀ {σ τ} → Term Γ (σ ⊗ τ) → Term Γ σ 
-    p₂ : ∀ {σ τ} → Term Γ (σ ⊗ τ) → Term Γ τ 
-    lam : ∀ σ {τ} → Term (σ ∷ Γ) τ → Term Γ (σ ⇛ τ)
+    Var : ∀ {τ} (v : Fin n) → τ ≡ lookup Γ v → Term Γ τ -- lol
+    -- termino unit??
+    -- U : Term Γ U 
+    _⊕_ : ∀ {σ τ} → Term Γ (σ ⇛ τ) → Term Γ σ → Term Γ τ -- app
+    _×ₚ_ : ∀ {σ τ} → Term Γ σ → Term Γ τ → Term Γ (σ ⊗ τ) -- pair
+    p₁ :  ∀ {σ τ} → Term Γ (σ ⊗ τ) → Term Γ σ -- fst
+    p₂ : ∀ {σ τ} → Term Γ (σ ⊗ τ) → Term Γ τ  -- snd
+    lam : ∀ σ {τ} → Term (σ ∷ Γ) τ → Term Γ (σ ⇛ τ) -- abstraccion
 
   -- Interpretación para tipos como objetos CCC
 
   ⟦_⟧ₜ : Ty → Obj
   ⟦ base ⟧ₜ = T
+  -- ⟦ U ⟧ₜ = T
   ⟦ (t ⊗ u) ⟧ₜ = ⟦ t ⟧ₜ × ⟦ u ⟧ₜ
   ⟦ (t ⇛ u) ⟧ₜ = ⟦ t ⟧ₜ ⇒ ⟦ u ⟧ₜ
 
@@ -76,14 +73,15 @@ record CCC : Set (a ⊔ b) where
   ⟦ [] ⟧ₓ = T
   ⟦ (t ∷ Γ) ⟧ₓ = ⟦ Γ ⟧ₓ × ⟦ t ⟧ₜ
 
-  find : ∀ {n : ℕ} (m : Fin n) → (Γ : Ctx n) → Hom ⟦ Γ ⟧ₓ ⟦ lookup Γ m ⟧ₜ
-  find Data.Fin.0F Γ = {!   !}
-  find (suc m) Γ = {!   !}
+  find : ∀ {n : ℕ} {τ} (m : Fin n) → (Γ : Ctx n) → τ ≡ lookup Γ m → Hom ⟦ Γ ⟧ₓ ⟦ τ ⟧ₜ
+  find Data.Fin.0F (x ∷ Γ) refl = π₂
+  find (suc m) (x ∷ Γ) refl = (find m Γ refl) ∙ π₁
 
   -- Interpretacion para términos como flechas CCC
 
   ⟦_⊢_⟧ₗ : ∀ {n : ℕ} {τ} → (Γ : Ctx n) → Term Γ τ → Hom ⟦ Γ ⟧ₓ ⟦ τ ⟧ₜ
-  ⟦ Γ ⊢ (Var v x) ⟧ₗ = {!   !} -- no se :'(
+  ⟦ Γ ⊢ Var v x ⟧ₗ = find v Γ x
+  -- ⟦ Γ ⊢ U ⟧ₗ = {! λ x →   !}
   ⟦ Γ ⊢ (t ⊕ u) ⟧ₗ = apply ∙ ⟨ ⟦ Γ ⊢ t ⟧ₗ , ⟦ Γ ⊢ u ⟧ₗ ⟩
   ⟦ Γ ⊢ (t ×ₚ u) ⟧ₗ = ⟨ ⟦ Γ ⊢ t ⟧ₗ , ⟦ Γ ⊢ u ⟧ₗ ⟩
   ⟦ Γ ⊢ (p₁ t) ⟧ₗ = π₁ ∙ ⟦ Γ ⊢ t ⟧ₗ 
