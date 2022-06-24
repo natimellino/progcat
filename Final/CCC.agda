@@ -41,8 +41,6 @@ record CCC : Set (a ⊔ b) where
 
   data Ty : Set where
       base : Ty
-      -- tipo unit ?
-      -- U : Ty
       _⊗_ : Ty → Ty → Ty
       _⇛_ : Ty → Ty → Ty
 
@@ -51,8 +49,6 @@ record CCC : Set (a ⊔ b) where
 
   data Term {n} (Γ : Ctx n) : Ty → Set where
     Var : ∀ {τ} (v : Fin n) → τ ≡ lookup Γ v → Term Γ τ -- lol
-    -- termino unit??
-    -- U : Term Γ U 
     _⊕_ : ∀ {σ τ} → Term Γ (σ ⇛ τ) → Term Γ σ → Term Γ τ -- app
     _×ₚ_ : ∀ {σ τ} → Term Γ σ → Term Γ τ → Term Γ (σ ⊗ τ) -- pair
     p₁ :  ∀ {σ τ} → Term Γ (σ ⊗ τ) → Term Γ σ -- fst
@@ -63,7 +59,6 @@ record CCC : Set (a ⊔ b) where
 
   ⟦_⟧ₜ : Ty → Obj
   ⟦ base ⟧ₜ = T
-  -- ⟦ U ⟧ₜ = T
   ⟦ (t ⊗ u) ⟧ₜ = ⟦ t ⟧ₜ × ⟦ u ⟧ₜ
   ⟦ (t ⇛ u) ⟧ₜ = ⟦ t ⟧ₜ ⇒ ⟦ u ⟧ₜ
 
@@ -81,9 +76,45 @@ record CCC : Set (a ⊔ b) where
 
   ⟦_⊢_⟧ₗ : ∀ {n : ℕ} {τ} → (Γ : Ctx n) → Term Γ τ → Hom ⟦ Γ ⟧ₓ ⟦ τ ⟧ₜ
   ⟦ Γ ⊢ Var v x ⟧ₗ = find v Γ x
-  -- ⟦ Γ ⊢ U ⟧ₗ = {! λ x →   !}
   ⟦ Γ ⊢ (t ⊕ u) ⟧ₗ = apply ∙ ⟨ ⟦ Γ ⊢ t ⟧ₗ , ⟦ Γ ⊢ u ⟧ₗ ⟩
   ⟦ Γ ⊢ (t ×ₚ u) ⟧ₗ = ⟨ ⟦ Γ ⊢ t ⟧ₗ , ⟦ Γ ⊢ u ⟧ₗ ⟩
   ⟦ Γ ⊢ (p₁ t) ⟧ₗ = π₁ ∙ ⟦ Γ ⊢ t ⟧ₗ 
   ⟦ Γ ⊢ (p₂ t) ⟧ₗ = π₂ ∙ ⟦ Γ ⊢ t ⟧ₗ
   ⟦ Γ ⊢ (lam σ t) ⟧ₗ = curry ⟦ (σ ∷ Γ) ⊢ t ⟧ₗ
+
+  record ReglasLC : Set (a ⊔ b) where
+    -- infix 4 _≡ₗ_
+    field
+      -- _≡ₗ_ : ∀ {n : ℕ} {τ₁ τ₂} → (Γ : Ctx n) → (t : Term Γ τ₁) → (u : Term Γ τ₂) → t ≡ u
+      prod₁ : ∀ {n : ℕ} {τ₁ τ₂} → {Γ : Ctx n} → {t : Term Γ τ₁} → {u : Term Γ τ₂} → 
+              p₁ (t ×ₚ u) ≡ t
+      prod₂ : ∀ {n : ℕ} {τ₁ τ₂} → {Γ : Ctx n} → {t : Term Γ τ₁} → {u : Term Γ τ₂} → 
+              p₂ (t ×ₚ u) ≡ u
+      prod₃ : ∀ {n : ℕ} {τ σ} → {Γ : Ctx n} → {t : Term Γ (τ ⊗ σ)} → 
+              ((p₁ t) ×ₚ (p₂ t)) ≡ t
+
+    proof_prod₁ : ∀ {n : ℕ} {τ₁ τ₂} → {Γ : Ctx n} → {t : Term Γ τ₁} → {u : Term Γ τ₂} →
+                  p₁ (t ×ₚ u) ≡ t → (⟦ Γ ⊢ p₁ (t ×ₚ u) ⟧ₗ) ≅ (⟦ Γ ⊢  t ⟧ₗ)
+    proof_prod₁ {Γ = Γ} {t = t} {u = u} p = 
+      proof 
+        π₁ ∙ ⟨ ⟦ Γ ⊢ t ⟧ₗ , ⟦ Γ ⊢ u ⟧ₗ ⟩ 
+          ≅⟨ law1 ⟩ 
+        ⟦ Γ ⊢ t ⟧ₗ ∎
+
+    -- DUDA: funciona sin tomar el argumento
+
+    proof_prod₂ : ∀ {n : ℕ} {τ₁ τ₂} → {Γ : Ctx n} → {t : Term Γ τ₁} → {u : Term Γ τ₂} →
+                  (⟦ Γ ⊢ p₂ (t ×ₚ u) ⟧ₗ) ≅ (⟦ Γ ⊢  u ⟧ₗ)
+    proof_prod₂ {Γ = Γ} {t = t} {u = u} = 
+      proof 
+        π₂ ∙ ⟨ ⟦ Γ ⊢ t ⟧ₗ , ⟦ Γ ⊢ u ⟧ₗ ⟩ 
+          ≅⟨ law2 ⟩ 
+        ⟦ Γ ⊢ u ⟧ₗ ∎
+
+    proof_prod₃ : ∀ {n : ℕ} {τ σ} → {Γ : Ctx n} → {t : Term Γ (τ ⊗ σ)} → 
+                  ⟦ Γ ⊢ ((p₁ t) ×ₚ (p₂ t)) ⟧ₗ ≅ ⟦ Γ ⊢ t ⟧ₗ
+    proof_prod₃ {Γ = Γ} {t = t} = 
+      proof 
+        ⟨ π₁ ∙ ⟦ Γ ⊢ t ⟧ₗ , π₂ ∙ ⟦ Γ ⊢ t ⟧ₗ ⟩ 
+          ≅⟨ sym (law3 refl refl) ⟩ 
+        ⟦ Γ ⊢ t ⟧ₗ ∎
