@@ -72,7 +72,7 @@ record CCC : Set (a ⊔ b) where
                            curry (g ∙ f)
                            ∎
 
-  open import Data.Nat using (ℕ; zero; suc; _+_; _≤?_; _≥_)
+  open import Data.Nat using (ℕ; zero; suc; _+_; _≤?_; _≥_; _≡ᵇ_)
   open import Data.Vec using (Vec; []; _∷_; lookup)
   open import Data.Fin using (Fin; zero; suc; toℕ)
   open import Relation.Binary.PropositionalEquality using (_≡_; refl; cong; cong₂)
@@ -123,8 +123,26 @@ record CCC : Set (a ⊔ b) where
   ⟦ Γ ⊢ (p₂ t) ⟧ₗ = π₂ ∙ ⟦ Γ ⊢ t ⟧ₗ
   ⟦ Γ ⊢ (lam σ t) ⟧ₗ = curry ⟦ (σ ∷ Γ) ⊢ t ⟧ₗ
 
-  sub : ∀ {n : ℕ} {τ₁ τ₂ τ₃} → {Γ : Ctx n} → (m : ℕ) → (t : Term Γ τ₁) → (u : Term Γ τ₂) → (Term Γ τ₁)
-  sub m t (Var v x) = {!   !}
+  {--
+    A partir de acá demostramos que nuestra interpretación preserva las siguientes
+    ecuaciones del lambda calculo:
+
+    1) fst(⟨a, b⟩)       = a
+    2) snd(⟨a, b⟩)       = b
+    3) ⟨fst(c) , snd(c)⟩ = c
+    4) (λx . b) a        = b[a/x]
+    5) (λx . c x)        = c (x no ocurre en c)
+  -}
+
+  open import Data.Bool
+
+  -- TODO: No sé como tiparlo
+
+  -- Substitución de términos
+
+  sub : ∀ {n : ℕ} {τ₁ τ₂} → {Γ : Ctx n} → (m : ℕ) → (t : Term Γ τ₁) → (u : Term Γ τ₂) → (Term Γ τ₁)
+  sub m t (Var v x) = {! if m ≡ᵇ (toℕ v) then t else (Var m x)  !}
+  -- sub m t (Var v x) = ?
   sub m t (u ⊕ v) = {!   !} -- (sub m t u) ⊕ (sub m t v)
   sub m t (u ×ₚ v) = {!  !}
   sub m t (p₁ u) = {!   !} -- p₁ (sub m t u)
@@ -138,32 +156,29 @@ record CCC : Set (a ⊔ b) where
   -- prod₃ : ∀ {n : ℕ} {τ σ} → {Γ : Ctx n} → {t : Term Γ (τ ⊗ σ)} → 
   --         ((p₁ t) ×ₚ (p₂ t)) ≡ t
 
+  -- (1)
   proof_prod₁ : ∀ {n : ℕ} {τ₁ τ₂} → {Γ : Ctx n} → {t : Term Γ τ₁} → {u : Term Γ τ₂} →
                 p₁ (t ×ₚ u) ≡ t → (⟦ Γ ⊢ p₁ (t ×ₚ u) ⟧ₗ) ≅ (⟦ Γ ⊢  t ⟧ₗ)
-  proof_prod₁ {Γ = Γ} {t = t} {u = u} p = 
-    proof 
-      π₁ ∙ ⟨ ⟦ Γ ⊢ t ⟧ₗ , ⟦ Γ ⊢ u ⟧ₗ ⟩ 
-        ≅⟨ law1 ⟩ 
-      ⟦ Γ ⊢ t ⟧ₗ ∎
+  proof_prod₁ {Γ = Γ} {t = t} {u = u} p = law1
 
-    -- DUDA: funciona sin tomar el argumento
-
+  -- TODO: funciona sin tomar el argumento
+  
+  -- (2)
   proof_prod₂ : ∀ {n : ℕ} {τ₁ τ₂} → {Γ : Ctx n} → {t : Term Γ τ₁} → {u : Term Γ τ₂} →
                 (⟦ Γ ⊢ p₂ (t ×ₚ u) ⟧ₗ) ≅ (⟦ Γ ⊢  u ⟧ₗ)
-  proof_prod₂ {Γ = Γ} {t = t} {u = u} = 
-    proof 
-      π₂ ∙ ⟨ ⟦ Γ ⊢ t ⟧ₗ , ⟦ Γ ⊢ u ⟧ₗ ⟩ 
-        ≅⟨ law2 ⟩ 
-      ⟦ Γ ⊢ u ⟧ₗ ∎
+  proof_prod₂ {Γ = Γ} {t = t} {u = u} = law2
 
+  -- (3)
   proof_prod₃ : ∀ {n : ℕ} {τ σ} → {Γ : Ctx n} → {t : Term Γ (τ ⊗ σ)} → 
                 ⟦ Γ ⊢ ((p₁ t) ×ₚ (p₂ t)) ⟧ₗ ≅ ⟦ Γ ⊢ t ⟧ₗ
-  proof_prod₃ {Γ = Γ} {t = t} = 
-    proof 
-      ⟨ π₁ ∙ ⟦ Γ ⊢ t ⟧ₗ , π₂ ∙ ⟦ Γ ⊢ t ⟧ₗ ⟩ 
-        ≅⟨ sym (law3 refl refl) ⟩ 
-      ⟦ Γ ⊢ t ⟧ₗ ∎
+  proof_prod₃ {Γ = Γ} {t = t} = sym (law3 refl refl)
 
+
+  -- (4)
+
+  -- TODO: no me sale :(
+
+  -- (5)
   proof_eta : ∀ {n : ℕ} {τ σ} → {Γ : Ctx n} → {t : Term (σ ∷ Γ) (σ ⇛ τ)} → {x : Term (σ ∷ Γ) σ} → 
               ⟦ Γ ⊢ (lam σ (t ⊕ x)) ⟧ₗ ≅ ⟦ (σ ∷ Γ) ⊢ t ⟧ₗ
   proof_eta {σ = σ} {Γ = Γ} {t = t} {x = x} = 
@@ -175,6 +190,8 @@ record CCC : Set (a ⊔ b) where
       {!   !} 
     ≅⟨ {!   !} ⟩ 
       {!   !} ∎
- -- _≅⟨_⟩_
-   -- curry (uncurry iden ∙ ⟨ ⟦ σ ∷ Γ ⊢ t ⟧ₗ , ⟦ σ ∷ Γ ⊢ x ⟧ₗ ⟩) ≅
-      -- ⟦ σ ∷ Γ ⊢ t ⟧ₗ
+
+  {--
+  ≅⟨_⟩_
+  curry (uncurry iden ∙ ⟨ ⟦ σ ∷ Γ ⊢ t ⟧ₗ , ⟦ σ ∷ Γ ⊢ x ⟧ₗ ⟩) ≅ ⟦ σ ∷ Γ ⊢ t ⟧ₗ
+  -}
