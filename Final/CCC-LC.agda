@@ -140,14 +140,15 @@ record CCC : Set (a ⊔ b) where
 
   -- Substitución de términos
 
-  sub : ∀ {n : ℕ} {τ₁ τ₂} → {Γ : Ctx n} → (m : ℕ) → (t : Term Γ τ₁) → (u : Term Γ τ₂) → (Term Γ τ₁)
-  sub m t (Var v x) = {! if m ≡ᵇ (toℕ v) then t else (Var m x)  !}
+  sub : ∀ {n k : ℕ} {τ₁ τ₂} → {Γ : Ctx n} → {Γ₁ : Ctx n} → (m : Fin n) → {p : τ₂ ≡ lookup Γ m} →
+        (t : Term Γ τ₁) → (u : Term Γ₁ τ₂) → (Term Γ₁ τ₁)
+  sub m t (Var v x) = {! if (toℕ m) ≡ᵇ (toℕ v) then (Var v x) else t  !} -- if (toℕ m) ≡ᵇ (toℕ v) then t else (Var m x)
   -- sub m t (Var v x) = ?
-  sub m t (u ⊕ v) = {!   !} -- (sub m t u) ⊕ (sub m t v)
-  sub m t (u ×ₚ v) = {!  !}
-  sub m t (p₁ u) = {!   !} -- p₁ (sub m t u)
+  sub m t (u ⊕ v) = {!   !} ⊕ sub m t v -- (sub m t u) ⊕ (sub m t v)
+  sub m t (u ×ₚ v)  = {!  !}
+  sub m t (p₁ u)  = {!   !} -- p₁ (sub m t u)
   sub m t (p₂ u) = {!   !} -- p₂ (sub m t u)
-  sub m t (lam σ u) = {!  !}
+  sub m t (lam σ u)  = {!  !}
 
   -- prod₁ : ∀ {n : ℕ} {τ₁ τ₂} → {Γ : Ctx n} → {t : Term Γ τ₁} → {u : Term Γ τ₂} → 
   --         p₁ (t ×ₚ u) ≡ t
