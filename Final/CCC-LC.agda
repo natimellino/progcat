@@ -96,6 +96,10 @@ record CCC : Set (a ⊔ b) where
     p₂ : ∀ {σ τ} → Term Γ (σ ⊗ τ) → Term Γ τ  -- snd
     lam : ∀ σ {τ} → Term (σ ∷ Γ) τ → Term Γ (σ ⇛ τ) -- abstraccion
 
+  extt : ∀ {n m : ℕ} → (σ : Fin n → Fin m) → (v : Fin n) → Fin m
+  extt σ Data.Fin.0F = {!   !}
+  extt σ (suc x) = {!  suc (σ x) !}
+
   -- Interpretación para tipos como objetos CCC
 
   ⟦_⟧ₜ : Ty → Obj
@@ -140,15 +144,15 @@ record CCC : Set (a ⊔ b) where
 
   -- Substitución de términos
 
-  sub : ∀ {n k : ℕ} {τ₁ τ₂} → {Γ : Ctx n} → {Γ₁ : Ctx n} → (m : Fin n) → {p : τ₂ ≡ lookup Γ m} →
-        (t : Term Γ τ₁) → (u : Term Γ₁ τ₂) → (Term Γ₁ τ₁)
-  sub m t (Var v x) = {! if (toℕ m) ≡ᵇ (toℕ v) then (Var v x) else t  !} -- if (toℕ m) ≡ᵇ (toℕ v) then t else (Var m x)
-  -- sub m t (Var v x) = ?
-  sub m t (u ⊕ v) = {!   !} ⊕ sub m t v -- (sub m t u) ⊕ (sub m t v)
-  sub m t (u ×ₚ v)  = {!  !}
-  sub m t (p₁ u)  = {!   !} -- p₁ (sub m t u)
-  sub m t (p₂ u) = {!   !} -- p₂ (sub m t u)
-  sub m t (lam σ u)  = {!  !}
+  sub : ∀ {n k : ℕ} {τ₁ τ₂} → {Γ : Ctx n} → {Γ₁ : Ctx k} → (m : Fin n) → -- {p : τ₂ ≡ lookup Γ m} →
+        (t : Term Γ τ₁) → (u : Term Γ τ₂) → (Term Γ₁ τ₁)
+  sub m (Var m x) u = {!   !} -- if (toℕ m) ≡ᵇ (toℕ v) then t else (Var m x)
+  sub m (Var v x) u = ?
+  sub m (t ⊕ t₁) u = (sub m t u) ⊕ (sub m t₁ u)
+  sub m (t ×ₚ t₁) u = (sub m t u) ×ₚ (sub m t₁ u)
+  sub m (p₁ t) u = p₁ (sub m t u)
+  sub m (p₂ t) u = p₂ (sub m t u)
+  sub m (lam σ t) u = {! lam σ (sub (suc m) t u)  !} 
 
   -- prod₁ : ∀ {n : ℕ} {τ₁ τ₂} → {Γ : Ctx n} → {t : Term Γ τ₁} → {u : Term Γ τ₂} → 
   --         p₁ (t ×ₚ u) ≡ t
