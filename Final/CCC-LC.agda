@@ -13,6 +13,12 @@ open import Library hiding (_×_ ; curry ; uncurry)
 open Cat C
 open Products hasProducts
 
+{-
+
+  CCC
+
+-}
+
 record CCC : Set (a ⊔ b) where
   infix 4 _⇒_
   field
@@ -72,6 +78,13 @@ record CCC : Set (a ⊔ b) where
                            curry (g ∙ f)
                            ∎
 
+  {-
+  
+    LAMBDA CALCULO
+
+  -}
+
+
   open import Data.Nat using (ℕ; zero; suc; _+_; _≤?_; _≥_; _≡ᵇ_)
   open import Data.Vec using (Vec; []; _∷_; lookup)
   open import Data.Fin using (Fin; zero; suc; toℕ)
@@ -80,13 +93,19 @@ record CCC : Set (a ⊔ b) where
   infixr 30 _⇛_
   infixr 30 _⊗_
 
+  -- Tipos
+
   data Ty : Set where
       base : Ty
       _⊗_ : Ty → Ty → Ty
       _⇛_ : Ty → Ty → Ty
 
+  -- Contextos de tipado
+
   Ctx : ℕ → Set
   Ctx = Vec Ty
+
+  -- Lambda términos
 
   data Term {n} (Γ : Ctx n) : Ty → Set where
     Var : ∀ {τ} (v : Fin n) → τ ≡ lookup Γ v → Term Γ τ -- lol
@@ -96,9 +115,53 @@ record CCC : Set (a ⊔ b) where
     p₂ : ∀ {σ τ} → Term Γ (σ ⊗ τ) → Term Γ τ  -- snd
     lam : ∀ σ {τ} → Term (σ ∷ Γ) τ → Term Γ (σ ⇛ τ) -- abstraccion
 
-  extt : ∀ {n m : ℕ} → (σ : Fin n → Fin m) → (v : Fin n) → Fin m
-  extt σ Data.Fin.0F = {!   !}
-  extt σ (suc x) = {!  suc (σ x) !}
+
+  -- open import Data.Bool
+
+  -- TODO: No sé como tiparlo
+
+  -- Substitución de términos
+
+  sub : ∀ {n k : ℕ} {τ₁ τ₂} → {Γ : Ctx n} → {Γ₁ : Ctx k} → (m : Fin n) → -- {p : τ₂ ≡ lookup Γ m} →
+        (t : Term Γ τ₁) → (u : Term Γ τ₂) → (Term Γ₁ τ₁)
+  -- sub m (Var m x) u = {!   !} -- if (toℕ m) ≡ᵇ (toℕ v) then t else (Var m x)
+  sub m (Var v x) u = {!   !}
+  sub m (t ⊕ t₁) u = (sub m t u) ⊕ (sub m t₁ u)
+  sub m (t ×ₚ t₁) u = (sub m t u) ×ₚ (sub m t₁ u)
+  sub m (p₁ t) u = p₁ (sub m t u)
+  sub m (p₂ t) u = p₂ (sub m t u)
+  sub m (lam σ t) u = {!   !} -- {! lam σ (sub (suc m) t u)  !} 
+
+  infixr 7 _≡ₜ_
+
+  -- Ecuaciones para lambda términos
+
+  data _≡ₜ_ : ∀ {n : ℕ} {Γ : Ctx n} {T : Ty} → Term Γ T → Term Γ T → Set where
+    pr₁ : ∀ {n : ℕ} {Γ : Ctx n} {A B : Ty} → {t₁ : Term Γ A} → {t₂ : Term Γ B} →
+          p₁ (t₁ ×ₚ t₂) ≡ₜ t₁
+
+    pr₂ : ∀ {n : ℕ} {Γ : Ctx n} {A B : Ty} → {t₁ : Term Γ A} → {t₂ : Term Γ B} →
+          p₂ (t₁ ×ₚ t₂) ≡ₜ t₂
+
+    pr₃ : ∀ {n : ℕ} {Γ : Ctx n} {A B : Ty} → {t : Term Γ (A ⊗ B)} →
+          (p₁ t) ×ₚ (p₂ t) ≡ₜ t
+
+    -- η : ∀ {n : ℕ} {Γ : Ctx n} {A B : Ty} → {f : Term Γ (A ⇛ B)} → {x : Term Γ A} →
+    --     (lam A (f ⊕ x)) ≡ₜ f
+
+    -- β : te la debo
+
+  -- extt : ∀ {n m : ℕ} → (σ : Fin n → Fin m) → (v : Fin n) → Fin m
+  -- extt σ Data.Fin.0F = {!   !}
+  -- extt σ (suc x) = {!  suc (σ x) !}
+
+
+  {-
+  
+    CATEGORICAL SEMANTICS
+  
+  -}
+
 
   -- Interpretación para tipos como objetos CCC
 
@@ -136,65 +199,33 @@ record CCC : Set (a ⊔ b) where
     3) ⟨fst(c) , snd(c)⟩ = c
     4) (λx . b) a        = b[a/x]
     5) (λx . c x)        = c (x no ocurre en c)
+
   -}
 
-  open import Data.Bool
+  -- Soundness
 
-  -- TODO: No sé como tiparlo
-
-  -- Substitución de términos
-
-  sub : ∀ {n k : ℕ} {τ₁ τ₂} → {Γ : Ctx n} → {Γ₁ : Ctx k} → (m : Fin n) → -- {p : τ₂ ≡ lookup Γ m} →
-        (t : Term Γ τ₁) → (u : Term Γ τ₂) → (Term Γ₁ τ₁)
-  sub m (Var m x) u = {!   !} -- if (toℕ m) ≡ᵇ (toℕ v) then t else (Var m x)
-  sub m (Var v x) u = ?
-  sub m (t ⊕ t₁) u = (sub m t u) ⊕ (sub m t₁ u)
-  sub m (t ×ₚ t₁) u = (sub m t u) ×ₚ (sub m t₁ u)
-  sub m (p₁ t) u = p₁ (sub m t u)
-  sub m (p₂ t) u = p₂ (sub m t u)
-  sub m (lam σ t) u = {! lam σ (sub (suc m) t u)  !} 
-
-  -- prod₁ : ∀ {n : ℕ} {τ₁ τ₂} → {Γ : Ctx n} → {t : Term Γ τ₁} → {u : Term Γ τ₂} → 
-  --         p₁ (t ×ₚ u) ≡ t
-  -- prod₂ : ∀ {n : ℕ} {τ₁ τ₂} → {Γ : Ctx n} → {t : Term Γ τ₁} → {u : Term Γ τ₂} → 
-  --         p₂ (t ×ₚ u) ≡ u
-  -- prod₃ : ∀ {n : ℕ} {τ σ} → {Γ : Ctx n} → {t : Term Γ (τ ⊗ σ)} → 
-  --         ((p₁ t) ×ₚ (p₂ t)) ≡ t
-
-  -- (1)
-  proof_prod₁ : ∀ {n : ℕ} {τ₁ τ₂} → {Γ : Ctx n} → {t : Term Γ τ₁} → {u : Term Γ τ₂} →
-                p₁ (t ×ₚ u) ≡ t → (⟦ Γ ⊢ p₁ (t ×ₚ u) ⟧ₗ) ≅ (⟦ Γ ⊢  t ⟧ₗ)
-  proof_prod₁ {Γ = Γ} {t = t} {u = u} p = law1
-
-  -- TODO: funciona sin tomar el argumento
-  
-  -- (2)
-  proof_prod₂ : ∀ {n : ℕ} {τ₁ τ₂} → {Γ : Ctx n} → {t : Term Γ τ₁} → {u : Term Γ τ₂} →
-                (⟦ Γ ⊢ p₂ (t ×ₚ u) ⟧ₗ) ≅ (⟦ Γ ⊢  u ⟧ₗ)
-  proof_prod₂ {Γ = Γ} {t = t} {u = u} = law2
-
-  -- (3)
-  proof_prod₃ : ∀ {n : ℕ} {τ σ} → {Γ : Ctx n} → {t : Term Γ (τ ⊗ σ)} → 
-                ⟦ Γ ⊢ ((p₁ t) ×ₚ (p₂ t)) ⟧ₗ ≅ ⟦ Γ ⊢ t ⟧ₗ
-  proof_prod₃ {Γ = Γ} {t = t} = sym (law3 refl refl)
-
+  proof : ∀ {n : ℕ} {τ} → {Γ : Ctx n} → {t : Term Γ τ} → {u : Term Γ τ} →
+          (t ≡ₜ u) → (⟦ Γ ⊢ t ⟧ₗ) ≅ (⟦ Γ ⊢ u ⟧ₗ)
+  proof pr₁ = law1
+  proof pr₂ = law2
+  proof pr₃ = sym (law3 refl refl)
 
   -- (4)
 
   -- TODO: no me sale :(
 
   -- (5)
-  proof_eta : ∀ {n : ℕ} {τ σ} → {Γ : Ctx n} → {t : Term (σ ∷ Γ) (σ ⇛ τ)} → {x : Term (σ ∷ Γ) σ} → 
-              ⟦ Γ ⊢ (lam σ (t ⊕ x)) ⟧ₗ ≅ ⟦ (σ ∷ Γ) ⊢ t ⟧ₗ
-  proof_eta {σ = σ} {Γ = Γ} {t = t} {x = x} = 
-    proof 
-      curry ((uncurry iden) ∙ ⟨ ⟦ σ ∷ Γ ⊢ t ⟧ₗ , ⟦ σ ∷ Γ ⊢ x ⟧ₗ ⟩) 
-    ≅⟨ sym curry-prop ⟩ 
-      map⇒ (uncurry iden) ∙ curry ⟨ ⟦ σ ∷ Γ ⊢ t ⟧ₗ , ⟦ σ ∷ Γ ⊢ x ⟧ₗ ⟩ 
-    ≅⟨ {!   !} ⟩ 
-      {!   !} 
-    ≅⟨ {!   !} ⟩ 
-      {!   !} ∎
+  -- proof_eta : ∀ {n : ℕ} {τ σ} → {Γ : Ctx n} → {t : Term (σ ∷ Γ) (σ ⇛ τ)} → {x : Term (σ ∷ Γ) σ} → 
+  --             ⟦ Γ ⊢ (lam σ (t ⊕ x)) ⟧ₗ ≅ ⟦ (σ ∷ Γ) ⊢ t ⟧ₗ
+  -- proof_eta {σ = σ} {Γ = Γ} {t = t} {x = x} = 
+  --   proof 
+  --     curry ((uncurry iden) ∙ ⟨ ⟦ σ ∷ Γ ⊢ t ⟧ₗ , ⟦ σ ∷ Γ ⊢ x ⟧ₗ ⟩) 
+  --   ≅⟨ sym curry-prop ⟩ 
+  --     map⇒ (uncurry iden) ∙ curry ⟨ ⟦ σ ∷ Γ ⊢ t ⟧ₗ , ⟦ σ ∷ Γ ⊢ x ⟧ₗ ⟩ 
+  --   ≅⟨ {!   !} ⟩ 
+  --     {!   !} 
+  --   ≅⟨ {!   !} ⟩ 
+  --     {!   !} ∎
 
   {--
   ≅⟨_⟩_
