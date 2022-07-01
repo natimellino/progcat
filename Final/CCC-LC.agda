@@ -40,7 +40,7 @@ record CCC : Set (a ⊔ b) where
   -- module Properties (isCCC : CCC) where
   -- open CCC isCCC
   open import Categories.Products.Properties hasProducts 
-         using (comp-pair ; iden-pair ; iden-comp-pair)
+         using (comp-pair ; iden-pair ; iden-comp-pair; fusion-pair)
   
  
   {- Ejercicio: map⇒ preserva identidades. -}
@@ -111,11 +111,19 @@ record CCC : Set (a ⊔ b) where
    
   -- TODO: this
 
+  -- open import Categories.Products.Properties using (fusion-pair)
+
   curry-prop2 : ∀{X Y Z} {f : Hom (Y × X) Z} {g : Hom Y X} →
                 ⟨ curry f , g ⟩ ≅ (pair (curry f) (iden {X})) ∙ ⟨ iden {Y} , g ⟩
-  curry-prop2 = {!   !}
-  
-  
+  curry-prop2 {X = X} {Y = Y} {Z = Z} {f = f} {g = g} = proof 
+    ⟨ curry f , g ⟩ 
+    ≅⟨ sym {! fusion-pair {f = curry f} {g = iden {X}} {h = iden {Y}} {i = g}  !} ⟩ 
+    {!   !} 
+    ≅⟨ {!   !} ⟩ 
+    {!   !} ∎
+    -- sym {! fusion-pair {A = (X ⇒ Z)} {B = Y} {C = X} {D = X} {E = Y} {f = curry f} {g = iden {X}} {h = iden {Y}} {i = g}  !}
+  -- fusion-pair {A = (X ⇒ Z)} {B = Y} {C = X} {D = X} {E = Y} {f = curry f} {g = iden {X}} {h = iden {Y}} {i = g}
+  -- _≅⟨_⟩_
   {-----------------------------------------------------------------------------
   
     LAMBDA CALCULO
@@ -222,6 +230,8 @@ record CCC : Set (a ⊔ b) where
   exts σ Z      =  Var Z
   exts σ (S x)  =  rename S_ (σ x)
 
+  -- Substitución simultánea dada una función de mapeo
+
   sub : ∀ {Γ Δ}
         → (∀ {A} → Γ ∋ A → Term Δ A)
           -------------------------
@@ -235,11 +245,7 @@ record CCC : Set (a ⊔ b) where
 
   infixr 7 _≡ₜ_
 
-  -- Ecuaciones para lambda términos
-
-  -- mapp : ∀ {Γ Δ A B} → (M : Term Γ A) →  Γ ,ₓ B ∋ A → Term Δ A
-  -- mapp M Z      =  M
-  -- mapp M (S x)  =  Var x
+  -- Substitución de términos
 
   _[_] : ∀ {Γ A B}
          → Term (Γ ,ₓ B) A
@@ -266,6 +272,7 @@ record CCC : Set (a ⊔ b) where
     ρ (S v) = S (S v)
 
   data _≡ₜ_ : ∀ {Γ : Context} {T : Ty} → Term Γ T → Term Γ T → Set where
+   -- Reglas para Pair
     pr₁ : ∀ {Γ : Context} {A B : Ty} → {t₁ : Term Γ A} → {t₂ : Term Γ B} →
           p₁ (t₁ ×ₚ t₂) ≡ₜ t₁
 
@@ -275,8 +282,10 @@ record CCC : Set (a ⊔ b) where
     pr₃ : ∀ {Γ : Context} {A B : Ty} → {t : Term Γ (A ⊗ B)} →
           (p₁ t) ×ₚ (p₂ t) ≡ₜ t
 
-    -- η : ∀ {Γ : Context} {A B : Ty} → {f : Term (Γ ,ₓ A) (A ⇛ B)} → {x : Term (Γ ,ₓ A) A} →
-    --    (lam A (f ⊕ (Var Z))) ≡ₜ f
+    -- Beta y Eta
+
+    -- η : ∀ {Γ : Context} {A B : Ty} → {f : Term Γ (A ⇛ B)} → {x : Term (Γ A} →
+    --     (lam A (f ⊕ x)) ≡ₜ f
 
     β : ∀ {Γ : Context} {A B : Ty} → {e : Term (Γ ,ₓ A) B} → {x : Term Γ A} →
         ((lam A e) ⊕ x) ≡ₜ (e [ x ])
