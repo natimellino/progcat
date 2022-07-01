@@ -269,47 +269,51 @@ record CCC : Set (a ⊔ b) where
 
   -- -- Interpretación para tipos como objetos CCC
 
-  -- ⟦_⟧ₜ : Ty → Obj
-  -- ⟦ base ⟧ₜ = T
-  -- ⟦ (t ⊗ u) ⟧ₜ = ⟦ t ⟧ₜ × ⟦ u ⟧ₜ
-  -- ⟦ (t ⇛ u) ⟧ₜ = ⟦ t ⟧ₜ ⇒ ⟦ u ⟧ₜ
+  ⟦_⟧ₜ : Ty → Obj
+  ⟦ base ⟧ₜ = T
+  ⟦ (t ⊗ u) ⟧ₜ = ⟦ t ⟧ₜ × ⟦ u ⟧ₜ
+  ⟦ (t ⇛ u) ⟧ₜ = ⟦ t ⟧ₜ ⇒ ⟦ u ⟧ₜ
 
   -- -- Interpretación para contextos como objetos CCC
 
-  -- ⟦_⟧ₓ : {n : ℕ} → (Γ : Ctx n) → Obj
-  -- ⟦ [] ⟧ₓ = T
-  -- ⟦ (t ∷ Γ) ⟧ₓ = ⟦ Γ ⟧ₓ × ⟦ t ⟧ₜ
+  ⟦_⟧ₓ : {n : ℕ} → (Γ : Context) → Obj
+  ⟦ ∅ ⟧ₓ = T
+  ⟦ Γ ,ₓ t ⟧ₓ = ⟦ Γ ⟧ₓ × ⟦ t ⟧ₜ
 
-  -- find : ∀ {n : ℕ} {τ} (m : Fin n) → (Γ : Ctx n) → τ ≡ lookup Γ m → Hom ⟦ Γ ⟧ₓ ⟦ τ ⟧ₜ
-  -- find Data.Fin.0F (x ∷ Γ) refl = π₂
-  -- find (suc m) (x ∷ Γ) refl = (find m Γ refl) ∙ π₁
+  find : ∀ {τ} → (Γ : Context) → (v : Γ ∋ τ) → Hom ⟦ Γ ⟧ₓ ⟦ τ ⟧ₜ
+  find (Γ ,ₓ x) Z = π₂
+  find (Γ ,ₓ x) (S v) = (find Γ v) ∙ π₁
 
-  -- -- Interpretacion para términos como flechas CCC
+  -- Interpretacion para términos como flechas CCC
 
-  -- ⟦_⊢_⟧ₗ : ∀ {n : ℕ} {τ} → (Γ : Ctx n) → Term Γ τ → Hom ⟦ Γ ⟧ₓ ⟦ τ ⟧ₜ
-  -- ⟦ Γ ⊢ Var v x ⟧ₗ = find v Γ x
-  -- ⟦ Γ ⊢ (t ⊕ u) ⟧ₗ = apply ∙ ⟨ ⟦ Γ ⊢ t ⟧ₗ , ⟦ Γ ⊢ u ⟧ₗ ⟩
-  -- ⟦ Γ ⊢ (t ×ₚ u) ⟧ₗ = ⟨ ⟦ Γ ⊢ t ⟧ₗ , ⟦ Γ ⊢ u ⟧ₗ ⟩
-  -- ⟦ Γ ⊢ (p₁ t) ⟧ₗ = π₁ ∙ ⟦ Γ ⊢ t ⟧ₗ 
-  -- ⟦ Γ ⊢ (p₂ t) ⟧ₗ = π₂ ∙ ⟦ Γ ⊢ t ⟧ₗ
-  -- ⟦ Γ ⊢ (lam σ t) ⟧ₗ = curry ⟦ (σ ∷ Γ) ⊢ t ⟧ₗ
+  ⟦_⊢_⟧ₗ : ∀ {τ} → (Γ : Context) → Term Γ τ → Hom ⟦ Γ ⟧ₓ ⟦ τ ⟧ₜ
+  ⟦ Γ ⊢ Var v ⟧ₗ = find Γ v
+  ⟦ Γ ⊢ (t ⊕ u) ⟧ₗ = apply ∙ ⟨ ⟦ Γ ⊢ t ⟧ₗ , ⟦ Γ ⊢ u ⟧ₗ ⟩
+  ⟦ Γ ⊢ (t ×ₚ u) ⟧ₗ = ⟨ ⟦ Γ ⊢ t ⟧ₗ , ⟦ Γ ⊢ u ⟧ₗ ⟩
+  ⟦ Γ ⊢ (p₁ t) ⟧ₗ = π₁ ∙ ⟦ Γ ⊢ t ⟧ₗ 
+  ⟦ Γ ⊢ (p₂ t) ⟧ₗ = π₂ ∙ ⟦ Γ ⊢ t ⟧ₗ
+  ⟦ Γ ⊢ (lam σ t) ⟧ₗ = curry ⟦ (Γ ,ₓ σ) ⊢ t ⟧ₗ
 
-  -- {--
-  --   A partir de acá demostramos que nuestra interpretación preserva las siguientes
-  --   ecuaciones del lambda calculo:
+  {--
+    A partir de acá demostramos que nuestra interpretación preserva las siguientes
+    ecuaciones del lambda calculo:
 
-  --   1) fst(⟨a, b⟩)       = a
-  --   2) snd(⟨a, b⟩)       = b
-  --   3) ⟨fst(c) , snd(c)⟩ = c
-  --   4) (λx . b) a        = b[a/x]
-  --   5) (λx . c x)        = c (x no ocurre en c)
+    1) fst(⟨a, b⟩)       = a
+    2) snd(⟨a, b⟩)       = b
+    3) ⟨fst(c) , snd(c)⟩ = c
+    4) (λx . b) a        = b[a/x]
+    5) (λx . c x)        = c (x no ocurre en c)
 
-  -- -}
+  -}
 
-  -- -- Soundness
+  -- Soundness
 
-  -- proof : ∀ {n : ℕ} {τ} → {Γ : Ctx n} → {t : Term Γ τ} → {u : Term Γ τ} →
-  --         (t ≡ₜ u) → (⟦ Γ ⊢ t ⟧ₗ) ≅ (⟦ Γ ⊢ u ⟧ₗ)
+  proof : ∀ {τ} → {Γ : Context} → {t : Term Γ τ} → {u : Term Γ τ} →
+         (t ≡ₜ u) → (⟦ Γ ⊢ t ⟧ₗ) ≅ (⟦ Γ ⊢ u ⟧ₗ)
+  proof pr₁ = law1
+  proof pr₂ = law2
+  proof pr₃ = sym (law3 refl refl)
+  proof β = {!   !}
   -- proof pr₁ = law1
   -- proof pr₂ = law2
   -- proof pr₃ = sym (law3 refl refl)
