@@ -78,6 +78,44 @@ record CCC : Set (a ⊔ b) where
                            curry (g ∙ f)
                            ∎
 
+  {- Una definición alternativa de exponencial se puede dar en base al morfismo apply:
+    Un exponencial entre A y B es un objeto B ⇒ A, y un morfismo apply : (B ⇒ A) × B → A tal que
+    para cada f : C × B → A existe un único morfismo curry f : C → (B ⇒ A) tal que 
+        apply ∙ pair (curry f) iden ≅ f  
+    Ejercicio: probar que nuestra definición implica la de más arriba. 
+  -}
+  curry-exp : ∀{X Y Z} {f : Hom (X × Y) Z} →  apply ∙ pair (curry f) iden ≅ f
+  curry-exp {X} {Y} {Z} {f = f} = proof
+                      apply ∙ pair (curry f) iden
+                      ≅⟨ refl ⟩
+                      uncurry iden ∙ pair (curry f) iden -- Tiene pinta de nat-curry falta multiplicar algo
+                      ≅⟨ sym idl ⟩
+                      iden ∙ uncurry iden ∙ pair (curry f) iden
+                      ≅⟨ sym lawcurry1 ⟩ -- Agrego el curry para poder usar nat-curry
+                      uncurry (curry (iden ∙ uncurry iden ∙ pair (curry f) iden))
+                      ≅⟨ cong uncurry (sym nat-curry) ⟩ -- Paso mágico
+                      uncurry (curry (iden ∙ uncurry iden) ∙ curry (uncurry iden) ∙ curry f)
+                      ≅⟨ cong uncurry (congl (cong curry idl)) ⟩ -- Comienza la limpieza de iden's
+                      uncurry (curry (uncurry iden) ∙ curry (uncurry iden) ∙ curry f)
+                      ≅⟨ cong uncurry (congl lawcurry2) ⟩
+                      uncurry (iden ∙ curry (uncurry iden) ∙ curry f)
+                      ≅⟨ cong uncurry idl ⟩
+                      uncurry (curry (uncurry iden) ∙ curry f)
+                      ≅⟨ cong uncurry (congl lawcurry2) ⟩
+                      uncurry (iden ∙ curry f)
+                      ≅⟨ cong uncurry idl ⟩
+                      uncurry (curry f)
+                      ≅⟨ lawcurry1 ⟩
+                      f
+                      ∎
+   
+  -- TODO: this
+
+  curry-prop2 : ∀{X Y Z} {f : Hom (Y × X) Z} {g : Hom Y X} →
+                ⟨ curry f , g ⟩ ≅ (pair (curry f) (iden {X})) ∙ ⟨ iden {Y} , g ⟩
+  curry-prop2 = {!   !}
+  
+  
   {-----------------------------------------------------------------------------
   
     LAMBDA CALCULO
@@ -88,13 +126,13 @@ record CCC : Set (a ⊔ b) where
   open import Data.Nat using (ℕ; zero; suc; _+_; _≤?_; _≥_; _≡ᵇ_; pred; _<_; z≤n; s≤s)
   open import Data.Vec using (Vec; []; _∷_; lookup)
   open import Data.Fin using (Fin; zero; suc; toℕ; fromℕ)
-  open import Relation.Binary.PropositionalEquality using (_≡_; refl; cong; cong₂)
+  open import Relation.Binary.PropositionalEquality using (_≡_; refl; cong₂)
   open import Data.Empty using (⊥; ⊥-elim)
   open import Relation.Nullary using (¬_)
   open import Relation.Nullary.Decidable using (True; toWitness)
 
-  infixr 30 _⇛_
-  infixr 30 _⊗_
+  infixr 7 _⇛_
+  infixl 7 _⊗_
 
   -- Tipos
 
@@ -140,21 +178,6 @@ record CCC : Set (a ⊔ b) where
 
   open import Data.Bool using (if_then_else_ ; Bool)
   open import Relation.Nullary using (Dec)
-
-  -- TODO: No sé como tiparlo
-
-  -- Substitución de términos
-
-  -- update : ∀ {n m : ℕ} {Γ : Ctx n} {τ : Ty} → (t : Term Γ τ) → (k : ℕ) 
-  --          → (i : ℕ) → {Γ' : Ctx (n + i)} → Term Γ' τ
-  -- update (Var v x) k i with k ≤? i
-  -- ... | Dec.yes _ = {!   !}
-  -- ... | Dec.no _ = Var {! (fromℕ (pred ((toℕ v) + i)))  !} {!   !}
-  -- update (t ⊕ t₁) k i = (update t k i) ⊕ (update t₁ k i)
-  -- update (t ×ₚ t₁) k i = (update t k i) ×ₚ (update t₁ k i)
-  -- update (p₁ t) k i = p₁ (update t k i)
-  -- update (p₂ t) k i = p₂ (update t k i)
-  -- update (lam σ t) k i = lam σ (update t (suc k) i)
 
   length : Context → ℕ
   length ∅        =  zero
@@ -210,16 +233,6 @@ record CCC : Set (a ⊔ b) where
   sub σ (p₂ t) = p₂ (sub σ t)
   sub σ (lam σ₁ t) = lam σ₁ (sub (exts σ) t)
 
-  -- sub : ∀ {n k : ℕ} {τ₁ τ₂} → {Γ : Ctx n} → {Γ₁ : Ctx k} → (m : Fin n) → -- {p : τ₂ ≡ lookup Γ m} →
-  --       (t : Term Γ τ₁) → (u : Term Γ τ₂) → (Term Γ₁ τ₁)
-  -- -- sub m (Var m x) u = {!   !} -- if (toℕ m) ≡ᵇ (toℕ v) then t else (Var m x)
-  -- sub m (Var v x) u = {!   !}
-  -- sub m (t ⊕ t₁) u = (sub m t u) ⊕ (sub m t₁ u)
-  -- sub m (t ×ₚ t₁) u = (sub m t u) ×ₚ (sub m t₁ u)
-  -- sub m (p₁ t) u = p₁ (sub m t u)
-  -- sub m (p₂ t) u = p₂ (sub m t u)
-  -- sub m (lam σ t) u = {!   !} -- {! lam σ (sub (suc m) t u)  !} 
-
   infixr 7 _≡ₜ_
 
   -- Ecuaciones para lambda términos
@@ -239,6 +252,19 @@ record CCC : Set (a ⊔ b) where
     σ Z      =  M
     σ (S x)  = Var x
 
+  weaken : ∀ {Γ A B}
+    → Term Γ A
+      ----------
+    → Term (Γ ,ₓ B) A
+  weaken {Γ} ⊢M = rename ρ ⊢M
+    where
+    ρ : ∀ {z B}
+      → Γ ∋ z
+        ---------
+      → (Γ ,ₓ B) ∋ z
+    ρ Z = S Z
+    ρ (S v) = S (S v)
+
   data _≡ₜ_ : ∀ {Γ : Context} {T : Ty} → Term Γ T → Term Γ T → Set where
     pr₁ : ∀ {Γ : Context} {A B : Ty} → {t₁ : Term Γ A} → {t₂ : Term Γ B} →
           p₁ (t₁ ×ₚ t₂) ≡ₜ t₁
@@ -249,34 +275,30 @@ record CCC : Set (a ⊔ b) where
     pr₃ : ∀ {Γ : Context} {A B : Ty} → {t : Term Γ (A ⊗ B)} →
           (p₁ t) ×ₚ (p₂ t) ≡ₜ t
 
-    -- η : ∀ {Γ : Context} {A B : Ty} → {f : Term Γ (A ⇛ B)} → {x : Term Γ A} →
-    --     (lam A (f ⊕ x)) ≡ₜ f
+    -- η : ∀ {Γ : Context} {A B : Ty} → {f : Term (Γ ,ₓ A) (A ⇛ B)} → {x : Term (Γ ,ₓ A) A} →
+    --    (lam A (f ⊕ (Var Z))) ≡ₜ f
 
     β : ∀ {Γ : Context} {A B : Ty} → {e : Term (Γ ,ₓ A) B} → {x : Term Γ A} →
         ((lam A e) ⊕ x) ≡ₜ (e [ x ])
 
-  -- -- extt : ∀ {n m : ℕ} → (σ : Fin n → Fin m) → (v : Fin n) → Fin m
-  -- -- extt σ Data.Fin.0F = {!   !}
-  -- -- extt σ (suc x) = {!  suc (σ x) !}
 
-
-  -- {-----------------------------------------------------------------------------
+  {-----------------------------------------------------------------------------
   
-  --   CATEGORICAL SEMANTICS
+    CATEGORICAL SEMANTICS
   
-  -- -----------------------------------------------------------------------------}
+  -----------------------------------------------------------------------------}
 
 
-  -- -- Interpretación para tipos como objetos CCC
+  -- Interpretación para tipos como objetos CCC
 
   ⟦_⟧ₜ : Ty → Obj
   ⟦ base ⟧ₜ = T
   ⟦ (t ⊗ u) ⟧ₜ = ⟦ t ⟧ₜ × ⟦ u ⟧ₜ
   ⟦ (t ⇛ u) ⟧ₜ = ⟦ t ⟧ₜ ⇒ ⟦ u ⟧ₜ
 
-  -- -- Interpretación para contextos como objetos CCC
+  -- Interpretación para contextos como objetos CCC
 
-  ⟦_⟧ₓ : {n : ℕ} → (Γ : Context) → Obj
+  ⟦_⟧ₓ : (Γ : Context) → Obj
   ⟦ ∅ ⟧ₓ = T
   ⟦ Γ ,ₓ t ⟧ₓ = ⟦ Γ ⟧ₓ × ⟦ t ⟧ₜ
 
@@ -306,21 +328,38 @@ record CCC : Set (a ⊔ b) where
 
   -}
 
+  -- TODO: this :(
+
+  subs-proof : ∀ {Γ : Context} {A A' : Ty} → {t : Term (Γ ,ₓ A) A'} → {t' : Term Γ A} →
+               ⟦ Γ ⊢ t [ t' ] ⟧ₗ ≅ ⟦ (Γ ,ₓ A) ⊢ t ⟧ₗ ∙ ⟨ iden {⟦ Γ ⟧ₓ} , ⟦ Γ ⊢ t' ⟧ₗ ⟩
+  subs-proof = {!   !} 
+
+  β-proof : ∀ {Γ : Context} {A B : Ty} → {e : Term (Γ ,ₓ A) B} → {x : Term Γ A} →
+            ⟦ Γ ⊢ lam A e ⊕ x ⟧ₗ ≅ ⟦ Γ ⊢ e [ x ] ⟧ₗ
+  β-proof {Γ} {A} {B} {e} {x} = proof 
+    apply ∙ ⟨ curry ⟦ Γ ,ₓ A ⊢ e ⟧ₗ , ⟦ Γ ⊢ x ⟧ₗ ⟩ 
+    ≅⟨ cong (λ a → apply ∙ a) curry-prop2 ⟩ 
+    apply ∙ ((pair (curry ⟦ Γ ,ₓ A ⊢ e ⟧ₗ) iden) ∙ ⟨ iden , ⟦ Γ ⊢ x ⟧ₗ ⟩) 
+    ≅⟨ sym ass ⟩ 
+    (apply ∙ pair (curry ⟦ Γ ,ₓ A ⊢ e ⟧ₗ) iden) ∙ ⟨ iden , ⟦ Γ ⊢ x ⟧ₗ ⟩ 
+    ≅⟨ congl curry-exp ⟩
+    ⟦ Γ ,ₓ A ⊢ e ⟧ₗ ∙ ⟨ iden , ⟦ Γ ⊢ x ⟧ₗ ⟩
+    ≅⟨ sym subs-proof ⟩ -- usar la demostracion de la igualdad de la substitucion
+    ⟦ Γ ⊢ e [ x ] ⟧ₗ 
+    ∎
+
   -- Soundness
 
-  proof : ∀ {τ} → {Γ : Context} → {t : Term Γ τ} → {u : Term Γ τ} →
-         (t ≡ₜ u) → (⟦ Γ ⊢ t ⟧ₗ) ≅ (⟦ Γ ⊢ u ⟧ₗ)
-  proof pr₁ = law1
-  proof pr₂ = law2
-  proof pr₃ = sym (law3 refl refl)
-  proof β = {!   !}
-  -- proof pr₁ = law1
-  -- proof pr₂ = law2
-  -- proof pr₃ = sym (law3 refl refl)
+  soundness : ∀ {τ} → {Γ : Context} → {t : Term Γ τ} → {u : Term Γ τ} →
+             (t ≡ₜ u) → (⟦ Γ ⊢ t ⟧ₗ) ≅ (⟦ Γ ⊢ u ⟧ₗ)
+  soundness pr₁ = law1
+  soundness pr₂ = law2
+  soundness pr₃ = sym (law3 refl refl)
+  soundness β = β-proof
 
-  -- (4)
 
-  -- TODO: no me sale :(
+-- uncurry iden ∙ ⟨ curry ⟦ Γ ,ₓ A ⊢ e ⟧ₗ , ⟦ Γ ⊢ x ⟧ₗ ⟩ ≅
+--      ⟦ Γ ⊢ sub (Final.CCC-LC.CCC.σ e x) e ⟧ₗ
 
   -- (5)
   -- proof_eta : ∀ {n : ℕ} {τ σ} → {Γ : Ctx n} → {t : Term (σ ∷ Γ) (σ ⇛ τ)} → {x : Term (σ ∷ Γ) σ} → 
@@ -336,6 +375,6 @@ record CCC : Set (a ⊔ b) where
   --     {!   !} ∎
 
   {--
-  ≅⟨_⟩_
+  _≅⟨_⟩_
   curry (uncurry iden ∙ ⟨ ⟦ σ ∷ Γ ⊢ t ⟧ₗ , ⟦ σ ∷ Γ ⊢ x ⟧ₗ ⟩) ≅ ⟦ σ ∷ Γ ⊢ t ⟧ₗ
   -}
