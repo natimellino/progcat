@@ -368,6 +368,15 @@ record CCC : Set (a ⊔ b) where
     ⟦ Γ ⊢ e [ x ] ⟧ₗ 
     ∎
 
+  {-
+    η : ∀ {Γ : Context} {A B : Ty} → {f : Term Γ (A ⇛ B)} →
+        (lam A ((weaken f) ⊕ (Var Z))) ≡ₜ f
+  -}
+
+  η-proof : ∀ {Γ : Context} {A B : Ty} → {u : Term Γ (A ⇛ B)} → 
+            curry (apply ∙ ⟨ ⟦ Γ ,ₓ A ⊢ weaken u ⟧ₗ , π₂ ⟩) ≅ ⟦ Γ ⊢ u ⟧ₗ
+  η-proof = {!   !}
+
   -- Soundness
 
   soundness : ∀ {τ} → {Γ : Context} → {t : Term Γ τ} → {u : Term Γ τ} →
@@ -376,7 +385,10 @@ record CCC : Set (a ⊔ b) where
   soundness pr₂ = law2
   soundness pr₃ = sym (law3 refl refl)
   soundness β = β-proof
-  soundness η = {!   !}
+  soundness η = η-proof
+
+
+  -- curry (apply ∙ ⟨ ⟦ Γ ,ₓ A ⊢ weaken u ⟧ₗ , π₂ ⟩) ≅ ⟦ Γ ⊢ u ⟧ₗ
 
 
 -- uncurry iden ∙ ⟨ curry ⟦ Γ ,ₓ A ⊢ e ⟧ₗ , ⟦ Γ ⊢ x ⟧ₗ ⟩ ≅
