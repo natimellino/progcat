@@ -157,9 +157,13 @@ record CCC : Set (a ⊔ b) where
   infix  4 _∋_
   infixl 5 _,ₓ_
 
+  -- Representación para contextos
+
   data Context : Set where
     ∅   : Context
     _,ₓ_ : Context → Ty → Context
+
+  -- Representación para variables con índices de Bruijn (representa el lookup)
 
   data _∋_ : Context → Ty → Set where
 
@@ -172,10 +176,9 @@ record CCC : Set (a ⊔ b) where
         ---------
       → Γ ,ₓ B ∋ A
 
-  -- Lambda términos
+  -- Representación para lambda términos
 
   data Term (Γ : Context) : Ty → Set where
-    -- Var : ∀ {τ} (v : Fin n) → τ ≡ lookup Γ v → Term Γ τ -- lol
     Var : ∀ {τ} → Γ ∋ τ → Term Γ τ
     _⊕_ : ∀ {σ τ} → Term Γ (σ ⇛ τ) → Term Γ σ → Term Γ τ -- app
     _×ₚ_ : ∀ {σ τ} → Term Γ σ → Term Γ τ → Term Γ (σ ⊗ τ) -- pair
@@ -186,6 +189,10 @@ record CCC : Set (a ⊔ b) where
 
   open import Data.Bool using (if_then_else_ ; Bool)
   open import Relation.Nullary using (Dec)
+
+  {-
+    Auxiliares (ver de sacar si no se usa)
+  -}
 
   length : Context → ℕ
   length ∅        =  zero
@@ -199,12 +206,18 @@ record CCC : Set (a ⊔ b) where
   count {_ ,ₓ _} {zero}    (s≤s z≤n)  =  Z
   count {Γ ,ₓ _} {(suc n)} (s≤s p)    =  S (count p)
 
+  -- Ver si sirve, creo que se puede sacar
+
   #_ : ∀ {Γ}
        → (n : ℕ)
        → {n∈Γ : True (suc n ≤? length Γ)}
          --------------------------------
        → Term Γ (lookup' (toWitness n∈Γ))
   #_ n {n∈Γ}  = Var (count (toWitness n∈Γ))
+
+  {-
+    Funciones auxiliares para ayudar a definir la substitución
+  -}
 
   extt : ∀ {Γ} {Δ} → (∀ {A} → Γ ∋ A → Δ ∋ A)
     ---------------------------------
@@ -230,7 +243,7 @@ record CCC : Set (a ⊔ b) where
   exts σ Z      =  Var Z
   exts σ (S x)  =  rename S_ (σ x)
 
-  -- Substitución simultánea dada una función de mapeo
+  -- Substitución simultánea dada una función de mapeo (multiple substitution)
 
   sub : ∀ {Γ Δ}
         → (∀ {A} → Γ ∋ A → Term Δ A)
@@ -243,9 +256,7 @@ record CCC : Set (a ⊔ b) where
   sub σ (p₂ t) = p₂ (sub σ t)
   sub σ (lam σ₁ t) = lam σ₁ (sub (exts σ) t)
 
-  infixr 7 _≡ₜ_
-
-  -- Substitución de términos
+  -- Substitución de términos (single)
 
   _[_] : ∀ {Γ A B}
          → Term (Γ ,ₓ B) A
@@ -258,18 +269,18 @@ record CCC : Set (a ⊔ b) where
     σ Z      =  M
     σ (S x)  = Var x
 
-  weaken : ∀ {Γ A B}
-    → Term Γ A
-      ----------
-    → Term (Γ ,ₓ B) A
+  weaken : ∀ {Γ A B} → Term Γ A 
+           → Term (Γ ,ₓ B) A
   weaken {Γ} ⊢M = rename ρ ⊢M
     where
-    ρ : ∀ {z B}
-      → Γ ∋ z
-        ---------
-      → (Γ ,ₓ B) ∋ z
-    ρ Z = S Z
-    ρ (S v) = S (S v)
+    ρ : ∀ {z B} → Γ ∋ z 
+        → (Γ ,ₓ B) ∋ z
+    ρ s = S s
+
+
+  -- Formalización de las ecuaciones del lambda cálculo
+
+  infixr 7 _≡ₜ_
 
   data _≡ₜ_ : ∀ {Γ : Context} {T : Ty} → Term Γ T → Term Γ T → Set where
    -- Reglas para Pair
@@ -284,8 +295,8 @@ record CCC : Set (a ⊔ b) where
 
     -- Beta y Eta
 
-    -- η : ∀ {Γ : Context} {A B : Ty} → {f : Term Γ (A ⇛ B)} → {x : Term (Γ A} →
-    --     (lam A (f ⊕ x)) ≡ₜ f
+    η : ∀ {Γ : Context} {A B : Ty} → {f : Term Γ (A ⇛ B)} →
+        (lam A ((weaken f) ⊕ (Var Z))) ≡ₜ f
 
     β : ∀ {Γ : Context} {A B : Ty} → {e : Term (Γ ,ₓ A) B} → {x : Term Γ A} →
         ((lam A e) ⊕ x) ≡ₜ (e [ x ])
@@ -327,7 +338,7 @@ record CCC : Set (a ⊔ b) where
 
   {--
     A partir de acá demostramos que nuestra interpretación preserva las siguientes
-    ecuaciones del lambda calculo:
+    ecuaciones del lambda calculo formalizadas más arriba:
 
     1) fst(⟨a, b⟩)       = a
     2) snd(⟨a, b⟩)       = b
@@ -365,6 +376,7 @@ record CCC : Set (a ⊔ b) where
   soundness pr₂ = law2
   soundness pr₃ = sym (law3 refl refl)
   soundness β = β-proof
+  soundness η = {!   !}
 
 
 -- uncurry iden ∙ ⟨ curry ⟦ Γ ,ₓ A ⊢ e ⟧ₗ , ⟦ Γ ⊢ x ⟧ₗ ⟩ ≅
