@@ -385,13 +385,29 @@ record CCC : Set (a ⊔ b) where
 
   -- _≅⟨_⟩_ η-lema₁ {f = ⟦ Γ ,ₓ A ⊢ weaken u ⟧ₗ}
 
+  -- aux1 : ∀ {A B C} → {f : A (B ⇒ C)} →
+  --        curry (pair f (iden {B})) ≅ f
+  -- aux1 = {!   !}
+
   η-lema₂ : ∀ {Γ : Context} {A B : Ty} → {u : Term Γ (A ⇛ B)} →
             curry (apply ∙ ⟨ ⟦ Γ ⊢ u ⟧ₗ ∙ π₁ , π₂ ⟩) ≅ curry (apply ∙ (pair ⟦ Γ ⊢ u ⟧ₗ (iden {⟦ A ⟧ₜ})))
   η-lema₂ = {!   !}
 
+  aux2 : ∀ {A B C} → {f : Hom A (B ⇒ C)} →
+         apply ∙ (pair f (iden {B})) ≅ uncurry f
+  aux2 = {!   !}
+
   η-lema₃ : ∀ {Γ : Context} {A B : Ty} → {u : Term Γ (A ⇛ B)} →
             curry (apply ∙ (pair ⟦ Γ ⊢ u ⟧ₗ (iden {⟦ A ⟧ₜ}))) ≅ ⟦ Γ ⊢ u ⟧ₗ
-  η-lema₃ = {!   !}
+  η-lema₃ {Γ = Γ} {u = u} = proof 
+    curry (apply ∙ pair ⟦ Γ ⊢ u ⟧ₗ iden) 
+    ≅⟨ cong (λ x → curry x) aux2 ⟩ 
+    curry (uncurry ⟦ Γ ⊢ u ⟧ₗ) 
+    ≅⟨ lawcurry2 ⟩ 
+    ⟦ Γ ⊢ u ⟧ₗ ∎
+
+  -- curry (uncurry iden ∙ ⟨ ⟦ Γ ⊢ u ⟧ₗ ∙ π₁ , iden ∙ π₂ ⟩) ≅
+      -- ⟦ Γ ⊢ u ⟧ₗ
 
   η-proof : ∀ {Γ : Context} {A B : Ty} → {u : Term Γ (A ⇛ B)} → 
             curry (apply ∙ ⟨ ⟦ Γ ,ₓ A ⊢ weaken u ⟧ₗ , π₂ ⟩) ≅ ⟦ Γ ⊢ u ⟧ₗ
