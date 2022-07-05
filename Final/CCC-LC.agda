@@ -113,17 +113,19 @@ record CCC : Set (a ⊔ b) where
 
   -- open import Categories.Products.Properties using (fusion-pair)
 
+  aux : ∀{X Y Z} {f : Hom (Y × X) Z} {g : Hom Y X} →
+        ⟨ curry f ∙ iden , iden ∙ g ⟩ ≅ ⟨ curry f , g ⟩
+  aux = cong₂ (λ x y → ⟨ x , y ⟩) idr idl
+
   curry-prop2 : ∀{X Y Z} {f : Hom (Y × X) Z} {g : Hom Y X} →
-                ⟨ curry f , g ⟩ ≅ (pair (curry f) (iden {X})) ∙ ⟨ iden {Y} , g ⟩
+                ⟨ curry f , g ⟩ ≅ pair (curry f) (iden {X}) ∙ ⟨ iden {Y} , g ⟩
   curry-prop2 {X = X} {Y = Y} {Z = Z} {f = f} {g = g} = proof 
     ⟨ curry f , g ⟩ 
-    ≅⟨ sym {! fusion-pair {f = curry f} {g = iden {X}} {h = iden {Y}} {i = g}  !} ⟩ 
-    {!   !} 
-    ≅⟨ {!   !} ⟩ 
-    {!   !} ∎
-    -- sym {! fusion-pair {A = (X ⇒ Z)} {B = Y} {C = X} {D = X} {E = Y} {f = curry f} {g = iden {X}} {h = iden {Y}} {i = g}  !}
-  -- fusion-pair {A = (X ⇒ Z)} {B = Y} {C = X} {D = X} {E = Y} {f = curry f} {g = iden {X}} {h = iden {Y}} {i = g}
-  -- _≅⟨_⟩_
+    ≅⟨ sym aux ⟩ 
+    ⟨ curry f ∙ iden , iden ∙ g ⟩ 
+    ≅⟨ sym fusion-pair ⟩ 
+    pair (curry f) iden ∙ ⟨ iden , g ⟩ ∎
+
   {-----------------------------------------------------------------------------
   
     LAMBDA CALCULO
@@ -411,26 +413,6 @@ record CCC : Set (a ⊔ b) where
   soundness pr₃ = sym (law3 refl refl)
   soundness β = β-proof
   soundness η = η-proof
-
-
-  -- curry (apply ∙ ⟨ ⟦ Γ ,ₓ A ⊢ weaken u ⟧ₗ , π₂ ⟩) ≅ ⟦ Γ ⊢ u ⟧ₗ
-
-
--- uncurry iden ∙ ⟨ curry ⟦ Γ ,ₓ A ⊢ e ⟧ₗ , ⟦ Γ ⊢ x ⟧ₗ ⟩ ≅
---      ⟦ Γ ⊢ sub (Final.CCC-LC.CCC.σ e x) e ⟧ₗ
-
-  -- (5)
-  -- proof_eta : ∀ {n : ℕ} {τ σ} → {Γ : Ctx n} → {t : Term (σ ∷ Γ) (σ ⇛ τ)} → {x : Term (σ ∷ Γ) σ} → 
-  --             ⟦ Γ ⊢ (lam σ (t ⊕ x)) ⟧ₗ ≅ ⟦ (σ ∷ Γ) ⊢ t ⟧ₗ
-  -- proof_eta {σ = σ} {Γ = Γ} {t = t} {x = x} = 
-  --   proof 
-  --     curry ((uncurry iden) ∙ ⟨ ⟦ σ ∷ Γ ⊢ t ⟧ₗ , ⟦ σ ∷ Γ ⊢ x ⟧ₗ ⟩) 
-  --   ≅⟨ sym curry-prop ⟩ 
-  --     map⇒ (uncurry iden) ∙ curry ⟨ ⟦ σ ∷ Γ ⊢ t ⟧ₗ , ⟦ σ ∷ Γ ⊢ x ⟧ₗ ⟩ 
-  --   ≅⟨ {!   !} ⟩ 
-  --     {!   !} 
-  --   ≅⟨ {!   !} ⟩ 
-  --     {!   !} ∎
 
   {--
   _≅⟨_⟩_
