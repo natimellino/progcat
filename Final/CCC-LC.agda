@@ -117,14 +117,20 @@ record CCC : Set (a ⊔ b) where
         ⟨ curry f ∙ iden , iden ∙ g ⟩ ≅ ⟨ curry f , g ⟩
   aux = cong₂ (λ x y → ⟨ x , y ⟩) idr idl
 
-  curry-prop2 : ∀{X Y Z} {f : Hom (Y × X) Z} {g : Hom Y X} →
+  curry-prop₂ : ∀{X Y Z} {f : Hom (Y × X) Z} {g : Hom Y X} →
                 ⟨ curry f , g ⟩ ≅ pair (curry f) (iden {X}) ∙ ⟨ iden {Y} , g ⟩
-  curry-prop2 {X = X} {Y = Y} {Z = Z} {f = f} {g = g} = proof 
+  curry-prop₂ {X = X} {Y = Y} {Z = Z} {f = f} {g = g} = proof 
     ⟨ curry f , g ⟩ 
     ≅⟨ sym aux ⟩ 
     ⟨ curry f ∙ iden , iden ∙ g ⟩ 
     ≅⟨ sym fusion-pair ⟩ 
     pair (curry f) iden ∙ ⟨ iden , g ⟩ ∎
+
+  -- TODO: 
+
+  uncurry-exp : ∀ {A B C} → {f : Hom A (B ⇒ C)} →
+         apply ∙ (pair f (iden {B})) ≅ uncurry f
+  uncurry-exp = {!   !}
 
   {-----------------------------------------------------------------------------
   
@@ -360,7 +366,7 @@ record CCC : Set (a ⊔ b) where
             ⟦ Γ ⊢ lam A e ⊕ x ⟧ₗ ≅ ⟦ Γ ⊢ e [ x ] ⟧ₗ
   β-proof {Γ} {A} {B} {e} {x} = proof 
     apply ∙ ⟨ curry ⟦ Γ ,ₓ A ⊢ e ⟧ₗ , ⟦ Γ ⊢ x ⟧ₗ ⟩ 
-    ≅⟨ cong (λ a → apply ∙ a) curry-prop2 ⟩ 
+    ≅⟨ cong (λ a → apply ∙ a) curry-prop₂ ⟩ 
     apply ∙ ((pair (curry ⟦ Γ ,ₓ A ⊢ e ⟧ₗ) iden) ∙ ⟨ iden , ⟦ Γ ⊢ x ⟧ₗ ⟩) 
     ≅⟨ sym ass ⟩ 
     (apply ∙ pair (curry ⟦ Γ ,ₓ A ⊢ e ⟧ₗ) iden) ∙ ⟨ iden , ⟦ Γ ⊢ x ⟧ₗ ⟩ 
@@ -376,23 +382,17 @@ record CCC : Set (a ⊔ b) where
             ⟦ Γ ,ₓ A ⊢ weaken u ⟧ₗ ≅ ⟦ Γ ⊢ u ⟧ₗ ∙ π₁
   η-lema₁ = {!   !}
 
-  -- TODO: ver despues de moverlo a la prueba principal
+  -- FIXME: ver despues de moverlo a la prueba principal
 
   η-lema₂ : ∀ {Γ : Context} {A B : Ty} → {u : Term Γ (A ⇛ B)} →
             curry (apply ∙ ⟨ ⟦ Γ ⊢ u ⟧ₗ ∙ π₁ , π₂ ⟩) ≅ curry (apply ∙ (pair ⟦ Γ ⊢ u ⟧ₗ (iden {⟦ A ⟧ₜ})))
   η-lema₂ {Γ = Γ} {u = u}  = cong (λ x → curry (uncurry iden ∙ ⟨ ⟦ Γ ⊢ u ⟧ₗ ∙ π₁ , x ⟩)) (sym idl)
 
-  -- TODO: 
-
-  aux2 : ∀ {A B C} → {f : Hom A (B ⇒ C)} →
-         apply ∙ (pair f (iden {B})) ≅ uncurry f
-  aux2 = {!   !}
-
   η-lema₃ : ∀ {Γ : Context} {A B : Ty} → {u : Term Γ (A ⇛ B)} →
             curry (apply ∙ (pair ⟦ Γ ⊢ u ⟧ₗ (iden {⟦ A ⟧ₜ}))) ≅ ⟦ Γ ⊢ u ⟧ₗ
   η-lema₃ {Γ = Γ} {u = u} = proof 
     curry (apply ∙ pair ⟦ Γ ⊢ u ⟧ₗ iden) 
-    ≅⟨ cong (λ x → curry x) aux2 ⟩ 
+    ≅⟨ cong (λ x → curry x) uncurry-exp ⟩ 
     curry (uncurry ⟦ Γ ⊢ u ⟧ₗ) 
     ≅⟨ lawcurry2 ⟩ 
     ⟦ Γ ⊢ u ⟧ₗ ∎
