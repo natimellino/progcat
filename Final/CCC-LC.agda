@@ -373,9 +373,34 @@ record CCC : Set (a ⊔ b) where
         (lam A ((weaken f) ⊕ (Var Z))) ≡ₜ f
   -}
 
+  η-lema₁ : ∀ {Γ : Context} {A B : Ty} → {u : Term Γ (A ⇛ B)} →
+            ⟦ Γ ,ₓ A ⊢ weaken u ⟧ₗ ≅ ⟦ Γ ⊢ u ⟧ₗ ∙ π₁
+  η-lema₁ = {!   !}
+
+  -- η-lema₂ : ∀ {A B C} → {f : Hom A (B ⇒ C)} →
+  --           curry (apply ∙ ⟨ f ∙ π₁ , π₂ ⟩) ≅ curry (apply ∙ (pair f (iden {B})))
+  -- η-lema₂ {f = f} = {!   !}
+
+  -- _≅⟨_⟩_ η-lema₁ {f = ⟦ Γ ,ₓ A ⊢ weaken u ⟧ₗ}
+
+  η-lema₂ : ∀ {Γ : Context} {A B : Ty} → {u : Term Γ (A ⇛ B)} →
+            curry (apply ∙ ⟨ ⟦ Γ ⊢ u ⟧ₗ ∙ π₁ , π₂ ⟩) ≅ curry (apply ∙ (pair ⟦ Γ ⊢ u ⟧ₗ (iden {⟦ A ⟧ₜ})))
+  η-lema₂ = {!   !}
+
+  η-lema₃ : ∀ {Γ : Context} {A B : Ty} → {u : Term Γ (A ⇛ B)} →
+            curry (apply ∙ (pair ⟦ Γ ⊢ u ⟧ₗ (iden {⟦ A ⟧ₜ}))) ≅ ⟦ Γ ⊢ u ⟧ₗ
+  η-lema₃ = {!   !}
+
   η-proof : ∀ {Γ : Context} {A B : Ty} → {u : Term Γ (A ⇛ B)} → 
             curry (apply ∙ ⟨ ⟦ Γ ,ₓ A ⊢ weaken u ⟧ₗ , π₂ ⟩) ≅ ⟦ Γ ⊢ u ⟧ₗ
-  η-proof = {!   !}
+  η-proof {Γ} {A} {B} {u} = proof 
+    curry (apply ∙ ⟨ ⟦ Γ ,ₓ A ⊢ weaken u ⟧ₗ , π₂ ⟩) 
+    ≅⟨ cong (λ x → curry (apply ∙ ⟨ x , π₂ ⟩)) η-lema₁ ⟩ 
+    curry (apply ∙ ⟨ ⟦ Γ ⊢ u ⟧ₗ ∙ π₁ , π₂ ⟩) 
+    ≅⟨ η-lema₂ ⟩ -- η-lema₂ {f = ⟦ Γ ⊢ u ⟧ₗ
+    curry (apply ∙ pair ⟦ Γ ⊢ u ⟧ₗ iden) 
+    ≅⟨ η-lema₃ ⟩ 
+    ⟦ Γ ⊢ u ⟧ₗ ∎
 
   -- Soundness
 
@@ -411,3 +436,4 @@ record CCC : Set (a ⊔ b) where
   _≅⟨_⟩_
   curry (uncurry iden ∙ ⟨ ⟦ σ ∷ Γ ⊢ t ⟧ₗ , ⟦ σ ∷ Γ ⊢ x ⟧ₗ ⟩) ≅ ⟦ σ ∷ Γ ⊢ t ⟧ₗ
   -}
+  
