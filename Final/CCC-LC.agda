@@ -370,28 +370,19 @@ record CCC : Set (a ⊔ b) where
     ⟦ Γ ⊢ e [ x ] ⟧ₗ 
     ∎
 
-  {-
-    η : ∀ {Γ : Context} {A B : Ty} → {f : Term Γ (A ⇛ B)} →
-        (lam A ((weaken f) ⊕ (Var Z))) ≡ₜ f
-  -}
+  -- TODO: 
 
   η-lema₁ : ∀ {Γ : Context} {A B : Ty} → {u : Term Γ (A ⇛ B)} →
             ⟦ Γ ,ₓ A ⊢ weaken u ⟧ₗ ≅ ⟦ Γ ⊢ u ⟧ₗ ∙ π₁
   η-lema₁ = {!   !}
 
-  -- η-lema₂ : ∀ {A B C} → {f : Hom A (B ⇒ C)} →
-  --           curry (apply ∙ ⟨ f ∙ π₁ , π₂ ⟩) ≅ curry (apply ∙ (pair f (iden {B})))
-  -- η-lema₂ {f = f} = {!   !}
-
-  -- _≅⟨_⟩_ η-lema₁ {f = ⟦ Γ ,ₓ A ⊢ weaken u ⟧ₗ}
-
-  -- aux1 : ∀ {A B C} → {f : A (B ⇒ C)} →
-  --        curry (pair f (iden {B})) ≅ f
-  -- aux1 = {!   !}
+  -- TODO: ver despues de moverlo a la prueba principal
 
   η-lema₂ : ∀ {Γ : Context} {A B : Ty} → {u : Term Γ (A ⇛ B)} →
             curry (apply ∙ ⟨ ⟦ Γ ⊢ u ⟧ₗ ∙ π₁ , π₂ ⟩) ≅ curry (apply ∙ (pair ⟦ Γ ⊢ u ⟧ₗ (iden {⟦ A ⟧ₜ})))
-  η-lema₂ = {!   !}
+  η-lema₂ {Γ = Γ} {u = u}  = cong (λ x → curry (uncurry iden ∙ ⟨ ⟦ Γ ⊢ u ⟧ₗ ∙ π₁ , x ⟩)) (sym idl)
+
+  -- TODO: 
 
   aux2 : ∀ {A B C} → {f : Hom A (B ⇒ C)} →
          apply ∙ (pair f (iden {B})) ≅ uncurry f
@@ -406,16 +397,13 @@ record CCC : Set (a ⊔ b) where
     ≅⟨ lawcurry2 ⟩ 
     ⟦ Γ ⊢ u ⟧ₗ ∎
 
-  -- curry (uncurry iden ∙ ⟨ ⟦ Γ ⊢ u ⟧ₗ ∙ π₁ , iden ∙ π₂ ⟩) ≅
-      -- ⟦ Γ ⊢ u ⟧ₗ
-
   η-proof : ∀ {Γ : Context} {A B : Ty} → {u : Term Γ (A ⇛ B)} → 
             curry (apply ∙ ⟨ ⟦ Γ ,ₓ A ⊢ weaken u ⟧ₗ , π₂ ⟩) ≅ ⟦ Γ ⊢ u ⟧ₗ
   η-proof {Γ} {A} {B} {u} = proof 
     curry (apply ∙ ⟨ ⟦ Γ ,ₓ A ⊢ weaken u ⟧ₗ , π₂ ⟩) 
     ≅⟨ cong (λ x → curry (apply ∙ ⟨ x , π₂ ⟩)) η-lema₁ ⟩ 
     curry (apply ∙ ⟨ ⟦ Γ ⊢ u ⟧ₗ ∙ π₁ , π₂ ⟩) 
-    ≅⟨ η-lema₂ ⟩ -- η-lema₂ {f = ⟦ Γ ⊢ u ⟧ₗ
+    ≅⟨ η-lema₂ ⟩
     curry (apply ∙ pair ⟦ Γ ⊢ u ⟧ₗ iden) 
     ≅⟨ η-lema₃ ⟩ 
     ⟦ Γ ⊢ u ⟧ₗ ∎
@@ -429,9 +417,4 @@ record CCC : Set (a ⊔ b) where
   soundness pr₃ = sym (law3 refl refl)
   soundness β = β-proof
   soundness η = η-proof
-
-  {--
-  _≅⟨_⟩_
-  curry (uncurry iden ∙ ⟨ ⟦ σ ∷ Γ ⊢ t ⟧ₗ , ⟦ σ ∷ Γ ⊢ x ⟧ₗ ⟩) ≅ ⟦ σ ∷ Γ ⊢ t ⟧ₗ
-  -}
   
