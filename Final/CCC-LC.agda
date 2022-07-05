@@ -83,6 +83,8 @@ record CCC : Set (a ⊔ b) where
     para cada f : C × B → A existe un único morfismo curry f : C → (B ⇒ A) tal que 
         apply ∙ pair (curry f) iden ≅ f  
     Ejercicio: probar que nuestra definición implica la de más arriba. 
+    
+    Cortesía de Santi
   -}
   curry-exp : ∀{X Y Z} {f : Hom (X × Y) Z} →  apply ∙ pair (curry f) iden ≅ f
   curry-exp {X} {Y} {Z} {f = f} = proof
@@ -126,11 +128,14 @@ record CCC : Set (a ⊔ b) where
     ≅⟨ sym fusion-pair ⟩ 
     pair (curry f) iden ∙ ⟨ iden , g ⟩ ∎
 
-  -- TODO: 
-
   uncurry-exp : ∀ {A B C} → {f : Hom A (B ⇒ C)} →
          apply ∙ (pair f (iden {B})) ≅ uncurry f
-  uncurry-exp = {!   !}
+  uncurry-exp {f = f} = proof 
+    apply ∙ pair f iden 
+    ≅⟨ cong (λ x → apply ∙ (pair x iden)) (sym lawcurry2) ⟩ 
+    apply ∙ pair (curry (uncurry f)) iden 
+    ≅⟨ curry-exp ⟩ 
+    uncurry f ∎
 
   {-----------------------------------------------------------------------------
   
