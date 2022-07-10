@@ -510,17 +510,43 @@ record CCC : Set (a ⊔ b) where
       ≅⟨ cong (λ x → ⟦ Γ ,ₓ A ⊢ x ⟧ₗ) refl ⟩ 
       ⟦ Γ ,ₓ A ⊢ (weaken u) ×ₚ (weaken u₁) ⟧ₗ
       ≅⟨ refl ⟩
-      ⟨ ⟦ Γ ,ₓ A ⊢ (weaken u) ⟧ₗ , ⟦ Γ ,ₓ A ⊢ (weaken u₁) ⟧ₗ ⟩ -- ⟨ ⟦ Γ ,ₓ A ⊢ (weaken u) ⟧ₗ , ⟦ Γ ,ₓ A ⊢ (weaken u₁) ⟩
+      ⟨ ⟦ Γ ,ₓ A ⊢ (weaken u) ⟧ₗ , ⟦ Γ ,ₓ A ⊢ (weaken u₁) ⟧ₗ ⟩
       ≅⟨ Library.cong₂ (λ x y → ⟨ x , y ⟩) (η-lema₁ {u = u}) (η-lema₁ {u = u₁}) ⟩
       ⟨ ⟦ Γ ⊢ u ⟧ₗ ∙ π₁ , ⟦ Γ ⊢ u₁ ⟧ₗ ∙ π₁ ⟩
       ≅⟨ sym fusion-aux ⟩
       ⟨ ⟦ Γ ⊢ u ⟧ₗ , ⟦ Γ ⊢ u₁ ⟧ₗ ⟩ ∙ π₁
       ≅⟨ cong (λ x → x ∙ π₁) refl ⟩
       ⟦ Γ ⊢ u ×ₚ u₁ ⟧ₗ ∙ π₁
-      ≅⟨ {!   !} ⟩
-      {!   !} ∎ 
-  η-lema₁ {Γ} {A} {B} {p₁ u} = {!   !}
-  η-lema₁ {Γ} {A} {B} {p₂ u} = {!   !}
+    ∎ 
+  η-lema₁ {Γ} {A} {B} {p₁ u} = 
+    proof 
+      ⟦ Γ ,ₓ A ⊢ weaken (p₁ u) ⟧ₗ 
+      ≅⟨ cong (λ x → ⟦ Γ ,ₓ A ⊢ x ⟧ₗ) refl ⟩ 
+      ⟦ Γ ,ₓ A ⊢ p₁ (weaken u) ⟧ₗ
+      ≅⟨ refl ⟩
+      π₁ ∙ ⟦ Γ ,ₓ A ⊢ (weaken u) ⟧ₗ
+      ≅⟨ cong (λ x → π₁ ∙ x) (η-lema₁ {u = u}) ⟩
+      π₁ ∙ (⟦ Γ ⊢ u ⟧ₗ ∙ π₁)
+      ≅⟨ sym ass ⟩
+      (π₁ ∙ ⟦ Γ ⊢ u ⟧ₗ) ∙ π₁
+      ≅⟨ cong (λ x → x ∙ π₁) refl ⟩
+      (⟦ Γ ⊢ p₁ u ⟧ₗ ∙ π₁) 
+    ∎
+
+  η-lema₁ {Γ} {A} {B} {p₂ u} = 
+    proof 
+      ⟦ Γ ,ₓ A ⊢ weaken (p₂ u) ⟧ₗ 
+      ≅⟨ cong (λ x → ⟦ Γ ,ₓ A ⊢ x ⟧ₗ) refl ⟩ 
+      ⟦ Γ ,ₓ A ⊢ p₂ (weaken u) ⟧ₗ
+      ≅⟨ refl ⟩
+      π₂ ∙ ⟦ Γ ,ₓ A ⊢ (weaken u) ⟧ₗ
+      ≅⟨ cong (λ x → π₂ ∙ x) (η-lema₁ {u = u}) ⟩
+      π₂ ∙ (⟦ Γ ⊢ u ⟧ₗ ∙ π₁)
+      ≅⟨ sym ass ⟩
+      (π₂ ∙ ⟦ Γ ⊢ u ⟧ₗ) ∙ π₁
+      ≅⟨ cong (λ x → x ∙ π₁) refl ⟩
+      (⟦ Γ ⊢ p₂ u ⟧ₗ ∙ π₁) 
+    ∎
   η-lema₁ {Γ} {A} {B} {lam σ u} = {!   !}
 
   -- FIXME: ver despues de moverlo a la prueba principal
