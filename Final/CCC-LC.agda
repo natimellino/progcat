@@ -363,9 +363,44 @@ record CCC : Set (a ⊔ b) where
 
   -- TODO: this :(
 
+  fusion-aux : ∀{A B C D}{f : Hom C A}{g : Hom C B}{h : Hom D C}
+               → ⟨ f , g ⟩ ∙ h ≅  ⟨ f ∙  h , g ∙ h ⟩
+  fusion-aux {f = f}{g}{h} = law3 (trans (sym ass) (congl law1)) (trans (sym ass) (congl law2))
+
   subs-proof : ∀ {Γ : Context} {A A' : Ty} → {t : Term (Γ ,ₓ A) A'} → {t' : Term Γ A} →
                ⟦ Γ ⊢ t [ t' ] ⟧ₗ ≅ ⟦ (Γ ,ₓ A) ⊢ t ⟧ₗ ∙ ⟨ iden {⟦ Γ ⟧ₓ} , ⟦ Γ ⊢ t' ⟧ₗ ⟩
-  subs-proof = {!   !} 
+  subs-proof {Γ} {.A'} {A'} {Var Z} {t'} = 
+    proof 
+      {!   !} 
+      ≅⟨ {!   !} ⟩ 
+      {!   !}
+      ≅⟨ {!   !} ⟩
+      {!   !}
+      ≅⟨ {!   !} ⟩
+      {!   !}
+      ≅⟨ {!   !} ⟩
+      {!   !}
+  subs-proof {Γ} {A} {A'} {Var (S x)} {t'} = {!   !}
+  subs-proof {Γ} {A} {A'} {t ⊕ t₁} {t'} = 
+    proof 
+      ⟦ Γ ⊢ (t ⊕ t₁) [ t' ] ⟧ₗ 
+      ≅⟨ cong (λ x → ⟦ Γ ⊢ x ⟧ₗ) refl ⟩ 
+      ⟦ Γ ⊢ (t [ t' ]) ⊕ (t₁ [ t' ]) ⟧ₗ
+      ≅⟨ refl ⟩
+      apply ∙ ⟨ ⟦ Γ ⊢ (t [ t' ]) ⟧ₗ , ⟦ Γ ⊢ (t₁ [ t' ]) ⟧ₗ ⟩ -- apply ∙ ⟨ ⟦ Γ ⊢ (t [ t' ]) ⟧ₗ , ⟦ (t₁ [ t' ]) ⟧ₗ ⟩
+      ≅⟨ Library.cong₂ (λ x y → apply ∙ ⟨ x , y ⟩) (subs-proof {t = t}) (subs-proof {t = t₁}) ⟩ -- subs-proof {Γ} {A} {A'} {weaken t} {t'}
+      apply ∙ ⟨ ⟦ Γ ,ₓ A ⊢ t ⟧ₗ ∙ ⟨ iden , ⟦ Γ ⊢ t' ⟧ₗ ⟩ , ⟦ Γ ,ₓ A ⊢ t₁ ⟧ₗ ∙ ⟨ iden , ⟦ Γ ⊢ t' ⟧ₗ ⟩ ⟩
+      ≅⟨ cong (λ x → apply ∙ x) (sym fusion-aux) ⟩
+      apply ∙ (⟨ ⟦ Γ ,ₓ A ⊢ t ⟧ₗ , ⟦ Γ ,ₓ A ⊢ t₁ ⟧ₗ ⟩ ∙ ⟨ iden , ⟦ Γ ⊢ t' ⟧ₗ ⟩)
+      ≅⟨ sym ass ⟩
+      (apply ∙ ⟨ ⟦ Γ ,ₓ A ⊢ t ⟧ₗ , ⟦ Γ ,ₓ A ⊢ t₁ ⟧ₗ ⟩) ∙ ⟨ iden , ⟦ Γ ⊢ t' ⟧ₗ ⟩
+      ≅⟨ cong (λ x → x ∙ ⟨ iden , ⟦ Γ ⊢ t' ⟧ₗ ⟩) (refl) ⟩
+      ⟦ (Γ ,ₓ A) ⊢ t ⊕ t₁ ⟧ₗ ∙ ⟨ iden , ⟦ Γ ⊢ t' ⟧ₗ ⟩
+      ∎
+  subs-proof {Γ} {A} {.(_ ⊗ _)} {t ×ₚ t₁} {t'} = {!   !}
+  subs-proof {Γ} {A} {A'} {p₁ t} {t'} = {!   !}
+  subs-proof {Γ} {A} {A'} {p₂ t} {t'} = {!   !}
+  subs-proof {Γ} {A} {.(σ ⇛ _)} {lam σ t} {t'} = {!   !} 
 
   β-proof : ∀ {Γ : Context} {A B : Ty} → {e : Term (Γ ,ₓ A) B} → {x : Term Γ A} →
             ⟦ Γ ⊢ lam A e ⊕ x ⟧ₗ ≅ ⟦ Γ ⊢ e [ x ] ⟧ₗ
