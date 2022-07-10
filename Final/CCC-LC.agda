@@ -369,17 +369,18 @@ record CCC : Set (a ⊔ b) where
 
   subs-proof : ∀ {Γ : Context} {A A' : Ty} → {t : Term (Γ ,ₓ A) A'} → {t' : Term Γ A} →
                ⟦ Γ ⊢ t [ t' ] ⟧ₗ ≅ ⟦ (Γ ,ₓ A) ⊢ t ⟧ₗ ∙ ⟨ iden {⟦ Γ ⟧ₓ} , ⟦ Γ ⊢ t' ⟧ₗ ⟩
-  subs-proof {Γ} {.A'} {A'} {Var Z} {t'} = 
+  subs-proof {Γ} {A} {A'} {Var Z} {t'} = 
     proof 
-      {!   !} 
-      ≅⟨ {!   !} ⟩ 
-      {!   !}
-      ≅⟨ {!   !} ⟩
-      {!   !}
-      ≅⟨ {!   !} ⟩
-      {!   !}
-      ≅⟨ {!   !} ⟩
-      {!   !}
+      ⟦ Γ ⊢ Var Z [ t' ] ⟧ₗ 
+      ≅⟨ cong (λ x → ⟦ Γ ⊢ x ⟧ₗ) refl ⟩ 
+      ⟦ Γ ⊢ t' ⟧ₗ
+      ≅⟨ sym law2 ⟩
+      π₂ ∙ ⟨ iden , ⟦ Γ ⊢ t' ⟧ₗ ⟩
+      ≅⟨ cong (λ x → x ∙ ⟨ iden , ⟦ Γ ⊢ t' ⟧ₗ ⟩) (refl) ⟩
+      (find (Γ ,ₓ A) Z) ∙ ⟨ iden , ⟦ Γ ⊢ t' ⟧ₗ ⟩
+      ≅⟨ cong (λ x → x ∙ ⟨ iden , ⟦ Γ ⊢ t' ⟧ₗ ⟩) (refl) ⟩
+      ⟦ (Γ ,ₓ A) ⊢ Var Z ⟧ₗ ∙ ⟨ iden , ⟦ Γ ⊢ t' ⟧ₗ ⟩
+      ∎
   subs-proof {Γ} {A} {A'} {Var (S x)} {t'} = {!   !}
   subs-proof {Γ} {A} {A'} {t ⊕ t₁} {t'} = 
     proof 
