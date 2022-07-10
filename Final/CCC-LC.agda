@@ -405,8 +405,8 @@ record CCC : Set (a ⊔ b) where
       ≅⟨ cong (λ x → ⟦ Γ ⊢ x ⟧ₗ) refl ⟩ 
       ⟦ Γ ⊢ (t [ t' ]) ⊕ (t₁ [ t' ]) ⟧ₗ
       ≅⟨ refl ⟩
-      apply ∙ ⟨ ⟦ Γ ⊢ (t [ t' ]) ⟧ₗ , ⟦ Γ ⊢ (t₁ [ t' ]) ⟧ₗ ⟩ -- apply ∙ ⟨ ⟦ Γ ⊢ (t [ t' ]) ⟧ₗ , ⟦ (t₁ [ t' ]) ⟧ₗ ⟩
-      ≅⟨ Library.cong₂ (λ x y → apply ∙ ⟨ x , y ⟩) (subs-proof {t = t}) (subs-proof {t = t₁}) ⟩ -- subs-proof {Γ} {A} {A'} {weaken t} {t'}
+      apply ∙ ⟨ ⟦ Γ ⊢ (t [ t' ]) ⟧ₗ , ⟦ Γ ⊢ (t₁ [ t' ]) ⟧ₗ ⟩
+      ≅⟨ Library.cong₂ (λ x y → apply ∙ ⟨ x , y ⟩) (subs-proof {t = t}) (subs-proof {t = t₁}) ⟩
       apply ∙ ⟨ ⟦ Γ ,ₓ A ⊢ t ⟧ₗ ∙ ⟨ iden , ⟦ Γ ⊢ t' ⟧ₗ ⟩ , ⟦ Γ ,ₓ A ⊢ t₁ ⟧ₗ ∙ ⟨ iden , ⟦ Γ ⊢ t' ⟧ₗ ⟩ ⟩
       ≅⟨ cong (λ x → apply ∙ x) (sym fusion-aux) ⟩
       apply ∙ (⟨ ⟦ Γ ,ₓ A ⊢ t ⟧ₗ , ⟦ Γ ,ₓ A ⊢ t₁ ⟧ₗ ⟩ ∙ ⟨ iden , ⟦ Γ ⊢ t' ⟧ₗ ⟩)
@@ -415,7 +415,20 @@ record CCC : Set (a ⊔ b) where
       ≅⟨ cong (λ x → x ∙ ⟨ iden , ⟦ Γ ⊢ t' ⟧ₗ ⟩) (refl) ⟩
       ⟦ (Γ ,ₓ A) ⊢ t ⊕ t₁ ⟧ₗ ∙ ⟨ iden , ⟦ Γ ⊢ t' ⟧ₗ ⟩
       ∎
-  subs-proof {Γ} {A} {.(_ ⊗ _)} {t ×ₚ t₁} {t'} = {!   !}
+  subs-proof {Γ} {A} {.(_ ⊗ _)} {t ×ₚ t₁} {t'} = 
+    proof 
+      ⟦ Γ ⊢ (t ×ₚ t₁) [ t' ] ⟧ₗ 
+      ≅⟨ cong (λ x → ⟦ Γ ⊢ x ⟧ₗ) refl ⟩ 
+      ⟦ Γ ⊢ (t [ t' ]) ×ₚ (t₁ [ t' ]) ⟧ₗ
+      ≅⟨ refl ⟩
+      ⟨ ⟦ Γ ⊢ t [ t' ] ⟧ₗ , ⟦ Γ ⊢ t₁ [ t' ] ⟧ₗ ⟩
+      ≅⟨ Library.cong₂ (λ x y → ⟨ x , y ⟩) (subs-proof {t = t}) (subs-proof {t = t₁}) ⟩
+      ⟨ ⟦ Γ ,ₓ A ⊢ t ⟧ₗ ∙ ⟨ iden , ⟦ Γ ⊢ t' ⟧ₗ ⟩ , ⟦ Γ ,ₓ A ⊢ t₁ ⟧ₗ ∙ ⟨ iden , ⟦ Γ ⊢ t' ⟧ₗ ⟩ ⟩
+      ≅⟨ sym fusion-aux ⟩
+      ⟨ ⟦ Γ ,ₓ A ⊢ t ⟧ₗ , ⟦ Γ ,ₓ A ⊢ t₁ ⟧ₗ ⟩ ∙ ⟨ iden , ⟦ Γ ⊢ t' ⟧ₗ ⟩
+      ≅⟨ cong (λ x → x ∙ ⟨ iden , ⟦ Γ ⊢ t' ⟧ₗ ⟩) refl ⟩
+      ⟦ Γ ,ₓ A ⊢ t ×ₚ t₁ ⟧ₗ ∙ ⟨ iden , ⟦ Γ ⊢ t' ⟧ₗ ⟩ 
+      ∎
   subs-proof {Γ} {A} {A'} {p₁ t} {t'} = {!   !}
   subs-proof {Γ} {A} {A'} {p₂ t} {t'} = {!   !}
   subs-proof {Γ} {A} {.(σ ⇛ _)} {lam σ t} {t'} = {!   !} 
@@ -475,4 +488,4 @@ record CCC : Set (a ⊔ b) where
   soundness pr₃ = sym (law3 refl refl)
   soundness β = β-proof
   soundness η = η-proof
-  
+   
