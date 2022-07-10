@@ -429,8 +429,34 @@ record CCC : Set (a ⊔ b) where
       ≅⟨ cong (λ x → x ∙ ⟨ iden , ⟦ Γ ⊢ t' ⟧ₗ ⟩) refl ⟩
       ⟦ Γ ,ₓ A ⊢ t ×ₚ t₁ ⟧ₗ ∙ ⟨ iden , ⟦ Γ ⊢ t' ⟧ₗ ⟩ 
       ∎
-  subs-proof {Γ} {A} {A'} {p₁ t} {t'} = {!   !}
-  subs-proof {Γ} {A} {A'} {p₂ t} {t'} = {!   !}
+  subs-proof {Γ} {A} {A'} {p₁ t} {t'} = 
+    proof 
+      ⟦ Γ ⊢ p₁ t [ t' ] ⟧ₗ 
+      ≅⟨ cong (λ x → ⟦ Γ ⊢ x ⟧ₗ) refl ⟩ 
+      ⟦ Γ ⊢ p₁ (t [ t' ]) ⟧ₗ
+      ≅⟨ refl ⟩
+      π₁ ∙ ⟦ Γ ⊢ t [ t' ] ⟧ₗ
+      ≅⟨ cong (λ x → π₁ ∙ x) (subs-proof {t = t}) ⟩
+      π₁ ∙ (⟦ Γ ,ₓ A ⊢ t ⟧ₗ ∙ ⟨ iden , ⟦ Γ ⊢ _ ⟧ₗ ⟩)
+      ≅⟨ sym ass ⟩
+      (π₁ ∙ ⟦ Γ ,ₓ A ⊢ t ⟧ₗ) ∙ ⟨ iden , ⟦ Γ ⊢ t' ⟧ₗ ⟩
+      ≅⟨ cong (λ x → x ∙ ⟨ iden , ⟦ Γ ⊢ t' ⟧ₗ ⟩) refl ⟩
+      ⟦ Γ ,ₓ A ⊢ p₁ t ⟧ₗ ∙ ⟨ iden , ⟦ Γ ⊢ t' ⟧ₗ ⟩ 
+      ∎
+  subs-proof {Γ} {A} {A'} {p₂ t} {t'} = 
+    proof 
+      ⟦ Γ ⊢ p₂ t [ t' ] ⟧ₗ 
+      ≅⟨ cong (λ x → ⟦ Γ ⊢ x ⟧ₗ) refl ⟩ 
+      ⟦ Γ ⊢ p₂ (t [ t' ]) ⟧ₗ
+      ≅⟨ refl ⟩
+      π₂ ∙ ⟦ Γ ⊢ t [ t' ] ⟧ₗ
+      ≅⟨ cong (λ x → π₂ ∙ x) (subs-proof {t = t}) ⟩
+      π₂ ∙ (⟦ Γ ,ₓ A ⊢ t ⟧ₗ ∙ ⟨ iden , ⟦ Γ ⊢ _ ⟧ₗ ⟩)
+      ≅⟨ sym ass ⟩
+      (π₂ ∙ ⟦ Γ ,ₓ A ⊢ t ⟧ₗ) ∙ ⟨ iden , ⟦ Γ ⊢ t' ⟧ₗ ⟩
+      ≅⟨ cong (λ x → x ∙ ⟨ iden , ⟦ Γ ⊢ t' ⟧ₗ ⟩) refl ⟩
+      ⟦ Γ ,ₓ A ⊢ p₂ t ⟧ₗ ∙ ⟨ iden , ⟦ Γ ⊢ t' ⟧ₗ ⟩ 
+      ∎
   subs-proof {Γ} {A} {.(σ ⇛ _)} {lam σ t} {t'} = {!   !} 
 
   β-proof : ∀ {Γ : Context} {A B : Ty} → {e : Term (Γ ,ₓ A) B} → {x : Term Γ A} →
