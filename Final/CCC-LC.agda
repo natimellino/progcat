@@ -381,7 +381,24 @@ record CCC : Set (a ⊔ b) where
       ≅⟨ cong (λ x → x ∙ ⟨ iden , ⟦ Γ ⊢ t' ⟧ₗ ⟩) (refl) ⟩
       ⟦ (Γ ,ₓ A) ⊢ Var Z ⟧ₗ ∙ ⟨ iden , ⟦ Γ ⊢ t' ⟧ₗ ⟩
       ∎
-  subs-proof {Γ} {A} {A'} {Var (S x)} {t'} = {!   !}
+  subs-proof {Γ} {A} {A'} {Var (S x)} {t'} = 
+    proof 
+      ⟦ Γ ⊢ Var (S x) [ t' ] ⟧ₗ 
+      ≅⟨ cong (λ x → ⟦ Γ ⊢ x ⟧ₗ) refl ⟩ 
+      ⟦ Γ ⊢ Var x ⟧ₗ
+      ≅⟨ refl ⟩
+      find Γ x
+      ≅⟨ sym idr ⟩
+      (find Γ x) ∙ iden
+      ≅⟨ cong (λ y →  (find Γ x) ∙ y) (sym law1) ⟩
+      find Γ x ∙ (π₁ ∙ ⟨ iden , ⟦ Γ ⊢ t' ⟧ₗ ⟩)
+      ≅⟨ sym ass ⟩
+      (find Γ x ∙ π₁) ∙ ⟨ iden , ⟦ Γ ⊢ t' ⟧ₗ ⟩
+      ≅⟨ cong (λ y → y ∙ ⟨ iden , ⟦ Γ ⊢ t' ⟧ₗ ⟩) (refl) ⟩
+      (find (Γ ,ₓ A) (S x)) ∙ ⟨ iden , ⟦ Γ ⊢ t' ⟧ₗ ⟩
+      ≅⟨ cong (λ y → y ∙ ⟨ iden , ⟦ Γ ⊢ t' ⟧ₗ ⟩) (refl) ⟩
+      ⟦ (Γ ,ₓ A) ⊢ Var (S x) ⟧ₗ ∙ ⟨ iden , ⟦ Γ ⊢ t' ⟧ₗ ⟩ 
+      ∎
   subs-proof {Γ} {A} {A'} {t ⊕ t₁} {t'} = 
     proof 
       ⟦ Γ ⊢ (t ⊕ t₁) [ t' ] ⟧ₗ 
