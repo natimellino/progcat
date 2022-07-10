@@ -475,9 +475,39 @@ record CCC : Set (a ⊔ b) where
 
   -- TODO: 
 
-  η-lema₁ : ∀ {Γ : Context} {A B : Ty} → {u : Term Γ (A ⇛ B)} →
+  η-lema₁ : ∀ {Γ : Context} {A B : Ty} → {u : Term Γ B} →
             ⟦ Γ ,ₓ A ⊢ weaken u ⟧ₗ ≅ ⟦ Γ ⊢ u ⟧ₗ ∙ π₁
-  η-lema₁ = {!   !}
+  η-lema₁ {Γ} {A} {B} {Var x} = 
+    proof 
+      ⟦ Γ ,ₓ A ⊢ weaken (Var x) ⟧ₗ 
+      ≅⟨ cong (λ x₁ → ⟦ Γ ,ₓ A ⊢ x₁ ⟧ₗ) refl ⟩ 
+      ⟦ Γ ,ₓ A ⊢ Var (S x) ⟧ₗ
+      ≅⟨ refl ⟩
+      find (Γ ,ₓ A) (S x)
+      ≅⟨ refl ⟩
+      (find Γ x) ∙ π₁
+      ≅⟨ cong (λ x₁ → x₁ ∙ π₁) refl ⟩
+      (⟦ Γ ⊢ Var x ⟧ₗ ∙ π₁) ∎
+  η-lema₁ {Γ} {A} {B} {u ⊕ u₁} = 
+    proof 
+      ⟦ Γ ,ₓ A ⊢ weaken (u ⊕ u₁) ⟧ₗ 
+      ≅⟨ cong (λ x → ⟦ Γ ,ₓ A ⊢ x ⟧ₗ) refl ⟩ 
+      ⟦ Γ ,ₓ A ⊢ (weaken u) ⊕ (weaken u₁) ⟧ₗ
+      ≅⟨ refl ⟩
+      apply ∙ ⟨ ⟦ Γ ,ₓ A ⊢ (weaken u) ⟧ₗ , ⟦ Γ ,ₓ A ⊢ (weaken u₁) ⟧ₗ ⟩
+      ≅⟨ Library.cong₂ (λ x y → apply ∙ ⟨ x , y ⟩) (η-lema₁ {u = u}) (η-lema₁ {u = u₁}) ⟩
+      apply ∙ ⟨ ⟦ Γ ⊢ u ⟧ₗ ∙ π₁ , ⟦ Γ ⊢ u₁ ⟧ₗ ∙ π₁ ⟩
+      ≅⟨ (cong (λ x → apply ∙ x) (sym fusion-aux)) ⟩
+      apply ∙ (⟨ ⟦ Γ ⊢ u ⟧ₗ , ⟦ Γ ⊢ u₁ ⟧ₗ ⟩ ∙ π₁)
+      ≅⟨ sym ass ⟩
+      (apply ∙ ⟨ ⟦ Γ ⊢ u ⟧ₗ , ⟦ Γ ⊢ u₁ ⟧ₗ ⟩) ∙ π₁
+      ≅⟨ cong (λ x → x ∙ π₁) refl ⟩
+      (⟦ Γ ⊢ u ⊕ u₁ ⟧ₗ ∙ π₁) 
+      ∎
+  η-lema₁ {Γ} {A} {B} {u ×ₚ u₁} = {!   !}
+  η-lema₁ {Γ} {A} {B} {p₁ u} = {!   !}
+  η-lema₁ {Γ} {A} {B} {p₂ u} = {!   !}
+  η-lema₁ {Γ} {A} {B} {lam σ u} = {!   !}
 
   -- FIXME: ver despues de moverlo a la prueba principal
 
@@ -514,4 +544,4 @@ record CCC : Set (a ⊔ b) where
   soundness pr₃ = sym (law3 refl refl)
   soundness β = β-proof
   soundness η = η-proof
-   
+    
