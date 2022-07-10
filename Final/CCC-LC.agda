@@ -504,7 +504,21 @@ record CCC : Set (a ⊔ b) where
       ≅⟨ cong (λ x → x ∙ π₁) refl ⟩
       (⟦ Γ ⊢ u ⊕ u₁ ⟧ₗ ∙ π₁) 
       ∎
-  η-lema₁ {Γ} {A} {B} {u ×ₚ u₁} = {!   !}
+  η-lema₁ {Γ} {A} {B} {u ×ₚ u₁} = 
+    proof 
+      ⟦ Γ ,ₓ A ⊢ weaken (u ×ₚ u₁) ⟧ₗ 
+      ≅⟨ cong (λ x → ⟦ Γ ,ₓ A ⊢ x ⟧ₗ) refl ⟩ 
+      ⟦ Γ ,ₓ A ⊢ (weaken u) ×ₚ (weaken u₁) ⟧ₗ
+      ≅⟨ refl ⟩
+      ⟨ ⟦ Γ ,ₓ A ⊢ (weaken u) ⟧ₗ , ⟦ Γ ,ₓ A ⊢ (weaken u₁) ⟧ₗ ⟩ -- ⟨ ⟦ Γ ,ₓ A ⊢ (weaken u) ⟧ₗ , ⟦ Γ ,ₓ A ⊢ (weaken u₁) ⟩
+      ≅⟨ Library.cong₂ (λ x y → ⟨ x , y ⟩) (η-lema₁ {u = u}) (η-lema₁ {u = u₁}) ⟩
+      ⟨ ⟦ Γ ⊢ u ⟧ₗ ∙ π₁ , ⟦ Γ ⊢ u₁ ⟧ₗ ∙ π₁ ⟩
+      ≅⟨ sym fusion-aux ⟩
+      ⟨ ⟦ Γ ⊢ u ⟧ₗ , ⟦ Γ ⊢ u₁ ⟧ₗ ⟩ ∙ π₁
+      ≅⟨ cong (λ x → x ∙ π₁) refl ⟩
+      ⟦ Γ ⊢ u ×ₚ u₁ ⟧ₗ ∙ π₁
+      ≅⟨ {!   !} ⟩
+      {!   !} ∎ 
   η-lema₁ {Γ} {A} {B} {p₁ u} = {!   !}
   η-lema₁ {Γ} {A} {B} {p₂ u} = {!   !}
   η-lema₁ {Γ} {A} {B} {lam σ u} = {!   !}
