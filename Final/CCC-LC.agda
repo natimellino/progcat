@@ -271,11 +271,16 @@ record CCC : Set (a ⊔ b) where
 
   -- Substitución de términos (single)
 
+  map-sub : ∀ {Γ A B} → {t : Term (Γ ,ₓ B) A} → {t' : Term Γ B} → {v : (Γ ,ₓ B ∋ A)} → Term Γ A
+  map-sub {t = t} {t' = t'} {v = Z} = t'
+  map-sub {t = t} {t' = t'} {v = S v} = Var v
+
   _[_] : ∀ {Γ A B}
          → Term (Γ ,ₓ B) A
          → Term Γ B
            ---------
          → Term Γ A
+  -- _[_] {Γ} {A} {B} t t' = sub {(Γ ,ₓ B)} {Γ} (map-sub {t' = t'}) {A} t
   _[_] {Γ} {A} {B} N M = sub {(Γ ,ₓ B)} {Γ} σ {A} N
     where
     σ : ∀ {A} → Γ ,ₓ B ∋ A → Term Γ A
@@ -367,24 +372,28 @@ record CCC : Set (a ⊔ b) where
                → ⟨ f , g ⟩ ∙ h ≅  ⟨ f ∙  h , g ∙ h ⟩
   fusion-aux {f = f}{g}{h} = law3 (trans (sym ass) (congl law1)) (trans (sym ass) (congl law2))
 
+  -- pr2 : ∀ {Γ : Context} {A B A' : Ty} → {t : Term (Γ ,ₓ A) (A' ⊗ B)} → {t' : Term Γ A} →
+  --       ⟦ Γ ⊢ (p₂ t) [ t' ] ⟧ₗ ≅ ⟦ Γ ⊢ p₂ (t [ t' ]) ⟧ₗ
+  -- pr2 {Γ} {A} {B} {A'} {t} {t'} = cong (λ x → ⟦ Γ ⊢ x ⟧ₗ) refl
+
   subs-proof : ∀ {Γ : Context} {A A' : Ty} → {t : Term (Γ ,ₓ A) A'} → {t' : Term Γ A} →
                ⟦ Γ ⊢ t [ t' ] ⟧ₗ ≅ ⟦ (Γ ,ₓ A) ⊢ t ⟧ₗ ∙ ⟨ iden {⟦ Γ ⟧ₓ} , ⟦ Γ ⊢ t' ⟧ₗ ⟩
   subs-proof {Γ} {A} {A'} {Var Z} {t'} = 
     proof 
       ⟦ Γ ⊢ Var Z [ t' ] ⟧ₗ 
-      ≅⟨ cong (λ x → ⟦ Γ ⊢ x ⟧ₗ) refl ⟩ 
+      ≅⟨ refl ⟩ 
       ⟦ Γ ⊢ t' ⟧ₗ
       ≅⟨ sym law2 ⟩
       π₂ ∙ ⟨ iden , ⟦ Γ ⊢ t' ⟧ₗ ⟩
-      ≅⟨ cong (λ x → x ∙ ⟨ iden , ⟦ Γ ⊢ t' ⟧ₗ ⟩) (refl) ⟩
+      ≅⟨ refl ⟩
       (find (Γ ,ₓ A) Z) ∙ ⟨ iden , ⟦ Γ ⊢ t' ⟧ₗ ⟩
-      ≅⟨ cong (λ x → x ∙ ⟨ iden , ⟦ Γ ⊢ t' ⟧ₗ ⟩) (refl) ⟩
+      ≅⟨ refl ⟩
       ⟦ (Γ ,ₓ A) ⊢ Var Z ⟧ₗ ∙ ⟨ iden , ⟦ Γ ⊢ t' ⟧ₗ ⟩
       ∎
   subs-proof {Γ} {A} {A'} {Var (S x)} {t'} = 
     proof 
       ⟦ Γ ⊢ Var (S x) [ t' ] ⟧ₗ 
-      ≅⟨ cong (λ x → ⟦ Γ ⊢ x ⟧ₗ) refl ⟩ 
+      ≅⟨ refl ⟩ 
       ⟦ Γ ⊢ Var x ⟧ₗ
       ≅⟨ refl ⟩
       find Γ x
@@ -394,9 +403,9 @@ record CCC : Set (a ⊔ b) where
       find Γ x ∙ (π₁ ∙ ⟨ iden , ⟦ Γ ⊢ t' ⟧ₗ ⟩)
       ≅⟨ sym ass ⟩
       (find Γ x ∙ π₁) ∙ ⟨ iden , ⟦ Γ ⊢ t' ⟧ₗ ⟩
-      ≅⟨ cong (λ y → y ∙ ⟨ iden , ⟦ Γ ⊢ t' ⟧ₗ ⟩) (refl) ⟩
+      ≅⟨ refl ⟩
       (find (Γ ,ₓ A) (S x)) ∙ ⟨ iden , ⟦ Γ ⊢ t' ⟧ₗ ⟩
-      ≅⟨ cong (λ y → y ∙ ⟨ iden , ⟦ Γ ⊢ t' ⟧ₗ ⟩) (refl) ⟩
+      ≅⟨ refl ⟩
       ⟦ (Γ ,ₓ A) ⊢ Var (S x) ⟧ₗ ∙ ⟨ iden , ⟦ Γ ⊢ t' ⟧ₗ ⟩ 
       ∎
   subs-proof {Γ} {A} {A'} {t ⊕ t₁} {t'} = 
@@ -412,7 +421,7 @@ record CCC : Set (a ⊔ b) where
       apply ∙ (⟨ ⟦ Γ ,ₓ A ⊢ t ⟧ₗ , ⟦ Γ ,ₓ A ⊢ t₁ ⟧ₗ ⟩ ∙ ⟨ iden , ⟦ Γ ⊢ t' ⟧ₗ ⟩)
       ≅⟨ sym ass ⟩
       (apply ∙ ⟨ ⟦ Γ ,ₓ A ⊢ t ⟧ₗ , ⟦ Γ ,ₓ A ⊢ t₁ ⟧ₗ ⟩) ∙ ⟨ iden , ⟦ Γ ⊢ t' ⟧ₗ ⟩
-      ≅⟨ cong (λ x → x ∙ ⟨ iden , ⟦ Γ ⊢ t' ⟧ₗ ⟩) (refl) ⟩
+      ≅⟨ refl ⟩
       ⟦ (Γ ,ₓ A) ⊢ t ⊕ t₁ ⟧ₗ ∙ ⟨ iden , ⟦ Γ ⊢ t' ⟧ₗ ⟩
       ∎
   subs-proof {Γ} {A} {.(_ ⊗ _)} {t ×ₚ t₁} {t'} = 
@@ -426,7 +435,7 @@ record CCC : Set (a ⊔ b) where
       ⟨ ⟦ Γ ,ₓ A ⊢ t ⟧ₗ ∙ ⟨ iden , ⟦ Γ ⊢ t' ⟧ₗ ⟩ , ⟦ Γ ,ₓ A ⊢ t₁ ⟧ₗ ∙ ⟨ iden , ⟦ Γ ⊢ t' ⟧ₗ ⟩ ⟩
       ≅⟨ sym fusion-aux ⟩
       ⟨ ⟦ Γ ,ₓ A ⊢ t ⟧ₗ , ⟦ Γ ,ₓ A ⊢ t₁ ⟧ₗ ⟩ ∙ ⟨ iden , ⟦ Γ ⊢ t' ⟧ₗ ⟩
-      ≅⟨ cong (λ x → x ∙ ⟨ iden , ⟦ Γ ⊢ t' ⟧ₗ ⟩) refl ⟩
+      ≅⟨ refl ⟩
       ⟦ Γ ,ₓ A ⊢ t ×ₚ t₁ ⟧ₗ ∙ ⟨ iden , ⟦ Γ ⊢ t' ⟧ₗ ⟩ 
       ∎
   subs-proof {Γ} {A} {A'} {p₁ t} {t'} = 
@@ -440,13 +449,14 @@ record CCC : Set (a ⊔ b) where
       π₁ ∙ (⟦ Γ ,ₓ A ⊢ t ⟧ₗ ∙ ⟨ iden , ⟦ Γ ⊢ _ ⟧ₗ ⟩)
       ≅⟨ sym ass ⟩
       (π₁ ∙ ⟦ Γ ,ₓ A ⊢ t ⟧ₗ) ∙ ⟨ iden , ⟦ Γ ⊢ t' ⟧ₗ ⟩
-      ≅⟨ cong (λ x → x ∙ ⟨ iden , ⟦ Γ ⊢ t' ⟧ₗ ⟩) refl ⟩
+      ≅⟨ refl ⟩
       ⟦ Γ ,ₓ A ⊢ p₁ t ⟧ₗ ∙ ⟨ iden , ⟦ Γ ⊢ t' ⟧ₗ ⟩ 
       ∎
-  subs-proof {Γ} {A} {A'} {p₂ t} {t'} = 
+  subs-proof {Γ} {A} {A'} {p₂ t} {t'} =
     proof 
-      ⟦ Γ ⊢ p₂ t [ t' ] ⟧ₗ 
+      ⟦ Γ ⊢ (p₂ t) [ t' ] ⟧ₗ
       ≅⟨ cong (λ x → ⟦ Γ ⊢ x ⟧ₗ) refl ⟩ 
+      -- ≅⟨ refl ⟩ 
       ⟦ Γ ⊢ p₂ (t [ t' ]) ⟧ₗ
       ≅⟨ refl ⟩
       π₂ ∙ ⟦ Γ ⊢ t [ t' ] ⟧ₗ
@@ -454,10 +464,25 @@ record CCC : Set (a ⊔ b) where
       π₂ ∙ (⟦ Γ ,ₓ A ⊢ t ⟧ₗ ∙ ⟨ iden , ⟦ Γ ⊢ _ ⟧ₗ ⟩)
       ≅⟨ sym ass ⟩
       (π₂ ∙ ⟦ Γ ,ₓ A ⊢ t ⟧ₗ) ∙ ⟨ iden , ⟦ Γ ⊢ t' ⟧ₗ ⟩
-      ≅⟨ cong (λ x → x ∙ ⟨ iden , ⟦ Γ ⊢ t' ⟧ₗ ⟩) refl ⟩
+      ≅⟨ refl ⟩
       ⟦ Γ ,ₓ A ⊢ p₂ t ⟧ₗ ∙ ⟨ iden , ⟦ Γ ⊢ t' ⟧ₗ ⟩ 
       ∎
-  subs-proof {Γ} {A} {.(σ ⇛ _)} {lam σ t} {t'} = {!   !} 
+
+   -- π₂ ∙ ⟦ Γ ⊢ sub (Final.CCC-LC.CCC.σ (p₂ t) t') t ⟧ₗ ≅
+   -- (π₂ ∙ ⟦ Γ ,ₓ A ⊢ t ⟧ₗ) ∙ ⟨ iden , ⟦ Γ ⊢ t' ⟧ₗ ⟩
+  subs-proof {Γ} {A} {.(σ ⇛ _)} {lam σ t} {t'} = {!   !}
+    -- proof 
+    --   ⟦ Γ ⊢ lam σ t [ t' ] ⟧ₗ 
+    --   ≅⟨ cong (λ x → ⟦ Γ ⊢ x ⟧ₗ) refl ⟩ 
+    --   {! ⟦ Γ ⊢ lam σ (t [ t' ]) ⟧ₗ !}
+    --   ≅⟨ {!   !} ⟩
+    --   {!   !}
+    --   ≅⟨ {!   !} ⟩
+    --   {!   !}
+    --   ≅⟨ {!   !} ⟩
+    --   {!   !}
+    --   ≅⟨ {!   !} ⟩
+    --   {!   !}
 
   β-proof : ∀ {Γ : Context} {A B : Ty} → {e : Term (Γ ,ₓ A) B} → {x : Term Γ A} →
             ⟦ Γ ⊢ lam A e ⊕ x ⟧ₗ ≅ ⟦ Γ ⊢ e [ x ] ⟧ₗ
@@ -480,18 +505,18 @@ record CCC : Set (a ⊔ b) where
   η-lema₁ {Γ} {A} {B} {Var x} = 
     proof 
       ⟦ Γ ,ₓ A ⊢ weaken (Var x) ⟧ₗ 
-      ≅⟨ cong (λ x₁ → ⟦ Γ ,ₓ A ⊢ x₁ ⟧ₗ) refl ⟩ 
+      ≅⟨ refl ⟩ 
       ⟦ Γ ,ₓ A ⊢ Var (S x) ⟧ₗ
       ≅⟨ refl ⟩
       find (Γ ,ₓ A) (S x)
       ≅⟨ refl ⟩
       (find Γ x) ∙ π₁
-      ≅⟨ cong (λ x₁ → x₁ ∙ π₁) refl ⟩
+      ≅⟨ refl ⟩
       (⟦ Γ ⊢ Var x ⟧ₗ ∙ π₁) ∎
   η-lema₁ {Γ} {A} {B} {u ⊕ u₁} = 
     proof 
       ⟦ Γ ,ₓ A ⊢ weaken (u ⊕ u₁) ⟧ₗ 
-      ≅⟨ cong (λ x → ⟦ Γ ,ₓ A ⊢ x ⟧ₗ) refl ⟩ 
+      ≅⟨ refl ⟩ 
       ⟦ Γ ,ₓ A ⊢ (weaken u) ⊕ (weaken u₁) ⟧ₗ
       ≅⟨ refl ⟩
       apply ∙ ⟨ ⟦ Γ ,ₓ A ⊢ (weaken u) ⟧ₗ , ⟦ Γ ,ₓ A ⊢ (weaken u₁) ⟧ₗ ⟩
@@ -501,13 +526,13 @@ record CCC : Set (a ⊔ b) where
       apply ∙ (⟨ ⟦ Γ ⊢ u ⟧ₗ , ⟦ Γ ⊢ u₁ ⟧ₗ ⟩ ∙ π₁)
       ≅⟨ sym ass ⟩
       (apply ∙ ⟨ ⟦ Γ ⊢ u ⟧ₗ , ⟦ Γ ⊢ u₁ ⟧ₗ ⟩) ∙ π₁
-      ≅⟨ cong (λ x → x ∙ π₁) refl ⟩
+      ≅⟨ refl ⟩
       (⟦ Γ ⊢ u ⊕ u₁ ⟧ₗ ∙ π₁) 
       ∎
   η-lema₁ {Γ} {A} {B} {u ×ₚ u₁} = 
     proof 
       ⟦ Γ ,ₓ A ⊢ weaken (u ×ₚ u₁) ⟧ₗ 
-      ≅⟨ cong (λ x → ⟦ Γ ,ₓ A ⊢ x ⟧ₗ) refl ⟩ 
+      ≅⟨ refl ⟩ 
       ⟦ Γ ,ₓ A ⊢ (weaken u) ×ₚ (weaken u₁) ⟧ₗ
       ≅⟨ refl ⟩
       ⟨ ⟦ Γ ,ₓ A ⊢ (weaken u) ⟧ₗ , ⟦ Γ ,ₓ A ⊢ (weaken u₁) ⟧ₗ ⟩
@@ -515,13 +540,13 @@ record CCC : Set (a ⊔ b) where
       ⟨ ⟦ Γ ⊢ u ⟧ₗ ∙ π₁ , ⟦ Γ ⊢ u₁ ⟧ₗ ∙ π₁ ⟩
       ≅⟨ sym fusion-aux ⟩
       ⟨ ⟦ Γ ⊢ u ⟧ₗ , ⟦ Γ ⊢ u₁ ⟧ₗ ⟩ ∙ π₁
-      ≅⟨ cong (λ x → x ∙ π₁) refl ⟩
+      ≅⟨ refl ⟩
       ⟦ Γ ⊢ u ×ₚ u₁ ⟧ₗ ∙ π₁
     ∎ 
   η-lema₁ {Γ} {A} {B} {p₁ u} = 
     proof 
       ⟦ Γ ,ₓ A ⊢ weaken (p₁ u) ⟧ₗ 
-      ≅⟨ cong (λ x → ⟦ Γ ,ₓ A ⊢ x ⟧ₗ) refl ⟩ 
+      ≅⟨ refl ⟩
       ⟦ Γ ,ₓ A ⊢ p₁ (weaken u) ⟧ₗ
       ≅⟨ refl ⟩
       π₁ ∙ ⟦ Γ ,ₓ A ⊢ (weaken u) ⟧ₗ
@@ -529,14 +554,14 @@ record CCC : Set (a ⊔ b) where
       π₁ ∙ (⟦ Γ ⊢ u ⟧ₗ ∙ π₁)
       ≅⟨ sym ass ⟩
       (π₁ ∙ ⟦ Γ ⊢ u ⟧ₗ) ∙ π₁
-      ≅⟨ cong (λ x → x ∙ π₁) refl ⟩
+      ≅⟨ refl ⟩
       (⟦ Γ ⊢ p₁ u ⟧ₗ ∙ π₁) 
     ∎
 
   η-lema₁ {Γ} {A} {B} {p₂ u} = 
     proof 
       ⟦ Γ ,ₓ A ⊢ weaken (p₂ u) ⟧ₗ 
-      ≅⟨ cong (λ x → ⟦ Γ ,ₓ A ⊢ x ⟧ₗ) refl ⟩ 
+      ≅⟨ refl ⟩ 
       ⟦ Γ ,ₓ A ⊢ p₂ (weaken u) ⟧ₗ
       ≅⟨ refl ⟩
       π₂ ∙ ⟦ Γ ,ₓ A ⊢ (weaken u) ⟧ₗ
@@ -544,7 +569,7 @@ record CCC : Set (a ⊔ b) where
       π₂ ∙ (⟦ Γ ⊢ u ⟧ₗ ∙ π₁)
       ≅⟨ sym ass ⟩
       (π₂ ∙ ⟦ Γ ⊢ u ⟧ₗ) ∙ π₁
-      ≅⟨ cong (λ x → x ∙ π₁) refl ⟩
+      ≅⟨ refl ⟩
       (⟦ Γ ⊢ p₂ u ⟧ₗ ∙ π₁) 
     ∎
   η-lema₁ {Γ} {A} {B} {lam σ u} = {!   !}
@@ -584,4 +609,4 @@ record CCC : Set (a ⊔ b) where
   soundness pr₃ = sym (law3 refl refl)
   soundness β = β-proof
   soundness η = η-proof
-    
+     
