@@ -34,7 +34,7 @@ record CCC : Set (a ⊔ b) where
 module Properties (isCCC : CCC) where
   open CCC isCCC
   open import Categories.Products.Properties hasProducts 
-         using (comp-pair ; iden-pair ; iden-comp-pair)
+         using (comp-pair ; iden-pair ; iden-comp-pair ; fusion-pair)
   
  
   {- Ejercicio: map⇒ preserva identidades. -}
@@ -78,10 +78,54 @@ module Properties (isCCC : CCC) where
     Un exponencial entre A y B es un objeto B ⇒ A, y un morfismo apply : (B ⇒ A) × B → A tal que
     para cada f : C × B → A existe un único morfismo curry f : C → (B ⇒ A) tal que 
         apply ∙ pair (curry f) iden ≅ f  
-
     Ejercicio: probar que nuestra definición implica la de más arriba. 
+    
+    Cortesía de Santi
   -}
   curry-exp : ∀{X Y Z} {f : Hom (X × Y) Z} →  apply ∙ pair (curry f) iden ≅ f
-  curry-exp {f = f} = {!   !}
+  curry-exp {X} {Y} {Z} {f = f} = proof
+                      apply ∙ pair (curry f) iden
+                      ≅⟨ refl ⟩
+                      uncurry iden ∙ pair (curry f) iden -- Tiene pinta de nat-curry falta multiplicar algo
+                      ≅⟨ sym idl ⟩
+                      iden ∙ uncurry iden ∙ pair (curry f) iden
+                      ≅⟨ sym lawcurry1 ⟩ -- Agrego el curry para poder usar nat-curry
+                      uncurry (curry (iden ∙ uncurry iden ∙ pair (curry f) iden))
+                      ≅⟨ cong uncurry (sym nat-curry) ⟩ -- Paso mágico
+                      uncurry (curry (iden ∙ uncurry iden) ∙ curry (uncurry iden) ∙ curry f)
+                      ≅⟨ cong uncurry (congl (cong curry idl)) ⟩ -- Comienza la limpieza de iden's
+                      uncurry (curry (uncurry iden) ∙ curry (uncurry iden) ∙ curry f)
+                      ≅⟨ cong uncurry (congl lawcurry2) ⟩
+                      uncurry (iden ∙ curry (uncurry iden) ∙ curry f)
+                      ≅⟨ cong uncurry idl ⟩
+                      uncurry (curry (uncurry iden) ∙ curry f)
+                      ≅⟨ cong uncurry (congl lawcurry2) ⟩
+                      uncurry (iden ∙ curry f)
+                      ≅⟨ cong uncurry idl ⟩
+                      uncurry (curry f)
+                      ≅⟨ lawcurry1 ⟩
+                      f
+                      ∎
 
+  aux : ∀{X Y Z} {f : Hom (Y × X) Z} {g : Hom Y X} →
+        ⟨ curry f ∙ iden , iden ∙ g ⟩ ≅ ⟨ curry f , g ⟩
+  aux = cong₂ (λ x y → ⟨ x , y ⟩) idr idl
+
+  curry-prop₂ : ∀{X Y Z} {f : Hom (Y × X) Z} {g : Hom Y X} →
+                ⟨ curry f , g ⟩ ≅ pair (curry f) (iden {X}) ∙ ⟨ iden {Y} , g ⟩
+  curry-prop₂ {X = X} {Y = Y} {Z = Z} {f = f} {g = g} = proof 
+    ⟨ curry f , g ⟩ 
+    ≅⟨ sym aux ⟩ 
+    ⟨ curry f ∙ iden , iden ∙ g ⟩ 
+    ≅⟨ sym fusion-pair ⟩ 
+    pair (curry f) iden ∙ ⟨ iden , g ⟩ ∎
+
+  uncurry-exp : ∀ {A B C} → {f : Hom A (B ⇒ C)} →
+         apply ∙ (pair f (iden {B})) ≅ uncurry f
+  uncurry-exp {f = f} = proof 
+    apply ∙ pair f iden 
+    ≅⟨ cong (λ x → apply ∙ (pair x iden)) (sym lawcurry2) ⟩ 
+    apply ∙ pair (curry (uncurry f)) iden 
+    ≅⟨ curry-exp ⟩ 
+    uncurry f ∎
   

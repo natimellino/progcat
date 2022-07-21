@@ -452,10 +452,11 @@ record CCC : Set (a ⊔ b) where
       ≅⟨ refl ⟩
       ⟦ Γ ,ₓ A ⊢ p₁ t ⟧ₗ ∙ ⟨ iden , ⟦ Γ ⊢ t' ⟧ₗ ⟩ 
       ∎
-  subs-proof {Γ} {A} {A'} {p₂ t} {t'} =
+  subs-proof {Γ} {A} {σ ⊗ A'} {p₂ t} {t'} =
     proof 
       ⟦ Γ ⊢ (p₂ t) [ t' ] ⟧ₗ
-      ≅⟨ cong (λ x → ⟦ Γ ⊢ x ⟧ₗ) refl ⟩ 
+      ≅⟨ {!   !} ⟩
+      -- ≅⟨ cong (λ x → ⟦ Γ ⊢ x ⟧ₗ) refl ⟩ 
       -- ≅⟨ refl ⟩ 
       ⟦ Γ ⊢ p₂ (t [ t' ]) ⟧ₗ
       ≅⟨ refl ⟩
@@ -467,22 +468,13 @@ record CCC : Set (a ⊔ b) where
       ≅⟨ refl ⟩
       ⟦ Γ ,ₓ A ⊢ p₂ t ⟧ₗ ∙ ⟨ iden , ⟦ Γ ⊢ t' ⟧ₗ ⟩ 
       ∎
-
-   -- π₂ ∙ ⟦ Γ ⊢ sub (Final.CCC-LC.CCC.σ (p₂ t) t') t ⟧ₗ ≅
-   -- (π₂ ∙ ⟦ Γ ,ₓ A ⊢ t ⟧ₗ) ∙ ⟨ iden , ⟦ Γ ⊢ t' ⟧ₗ ⟩
   subs-proof {Γ} {A} {.(σ ⇛ _)} {lam σ t} {t'} = {!   !}
-    -- proof 
-    --   ⟦ Γ ⊢ lam σ t [ t' ] ⟧ₗ 
-    --   ≅⟨ cong (λ x → ⟦ Γ ⊢ x ⟧ₗ) refl ⟩ 
-    --   {! ⟦ Γ ⊢ lam σ (t [ t' ]) ⟧ₗ !}
-    --   ≅⟨ {!   !} ⟩
-    --   {!   !}
-    --   ≅⟨ {!   !} ⟩
-    --   {!   !}
-    --   ≅⟨ {!   !} ⟩
-    --   {!   !}
-    --   ≅⟨ {!   !} ⟩
-    --   {!   !}
+
+  {-
+  -- π₂ ∙ ⟦ Γ ⊢ sub (Final.CCC-LC.CCC.σ (p₂ t) t') t ⟧ₗ ≅
+   -- (π₂ ∙ ⟦ Γ ,ₓ A ⊢ t ⟧ₗ) ∙ ⟨ iden , ⟦ Γ ⊢ t' ⟧ₗ ⟩
+  -}
+
 
   β-proof : ∀ {Γ : Context} {A B : Ty} → {e : Term (Γ ,ₓ A) B} → {x : Term Γ A} →
             ⟦ Γ ⊢ lam A e ⊕ x ⟧ₗ ≅ ⟦ Γ ⊢ e [ x ] ⟧ₗ
