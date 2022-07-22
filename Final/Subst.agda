@@ -2,10 +2,14 @@ module Final.Subst where
 
 open import Final.SimplyTyped
 
+-- Nos permite extender el contexto
+
 extt : ∀ {Γ} {Δ} → (∀ {A} → Γ ∋ A → Δ ∋ A)
        → (∀ {A B} → Γ ,ₓ B ∋ A → Δ ,ₓ B ∋ A)
 extt ρ Z      =  Z
 extt ρ (S x)  =  S (ρ x)
+
+-- Nos permite llevar términos de un contexto a otro
 
 rename : ∀ {Γ Δ}
          → (∀ {A} → Γ ∋ A → Δ ∋ A)
@@ -16,6 +20,8 @@ rename ρ (t ×ₚ t₁) = rename ρ t ×ₚ rename ρ t₁
 rename ρ (p₁ t) = p₁ (rename ρ t)
 rename ρ (p₂ t) = p₂ (rename ρ t)
 rename ρ (lam σ t) = lam σ (rename (extt ρ) t)
+
+-- Lo mismo que extt pero para términos
 
 exts : ∀ {Γ Δ}
        → (∀ {A} →       Γ ∋ A →     Term Δ A)
@@ -34,6 +40,8 @@ sub σ (p₁ t) = p₁ (sub σ t)
 sub σ (p₂ t) = p₂ (sub σ t)
 sub σ (lam σ₁ t) = lam σ₁ (sub (exts σ) t)
 
+-- Definimos la substitución 'común' a partir de la substitución simultánea
+
 _[_] : ∀ {Γ A B} → Term (Γ ,ₓ B) A → Term Γ B
        → Term Γ A
 _[_] {Γ} {A} {B} N M = sub {(Γ ,ₓ B)} {Γ} σ {A} N
@@ -43,6 +51,7 @@ _[_] {Γ} {A} {B} N M = sub {(Γ ,ₓ B)} {Γ} σ {A} N
     σ (S x)  = Var x
 
 -- Debilitación de contexto de tipado
+
 weaken : ∀ {Γ A B} → Term Γ A 
            → Term (Γ ,ₓ B) A
 weaken {Γ} t = rename ρ t
@@ -51,7 +60,11 @@ weaken {Γ} t = rename ρ t
         → (Γ ,ₓ B) ∋ z
     ρ s = S s
 
--- Formalización de las ecuaciones del lambda cálculo
+{------------------------------------------------------------------------
+
+Formalización de las ecuaciones del lambda cálculo
+
+------------------------------------------------------------------------} 
 
 infixr 7 _≡ₜ_
 
