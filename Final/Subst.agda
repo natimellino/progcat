@@ -2,32 +2,38 @@ module Final.Subst where
 
 open import Final.SimplyTyped
 
--- Nos permite extender el contexto
 
-extt : ∀ {Γ} {Δ} → (∀ {A} → Γ ∋ A → Δ ∋ A)
-       → (∀ {A B} → Γ ,ₓ B ∋ A → Δ ,ₓ B ∋ A)
-extt ρ Z      =  Z
-extt ρ (S x)  =  S (ρ x)
+data _▹_ :  Context → Context → Set where
+  iden▹ : ∀{Γ} → Γ ▹ Γ
+  wπ▹ : ∀{Γ Γ' A} → Γ' ▹ Γ → (Γ' ,ₓ A) ▹ Γ
+  w×▹ : ∀{Γ Γ' A} → Γ' ▹ Γ →  (Γ' ,ₓ A) ▹ (Γ ,ₓ A)
 
--- Nos permite llevar términos de un contexto a otro
+weakenVar : ∀{Γ Γ' A} → Γ ∋ A → Γ' ▹ Γ → Γ' ∋ A
+weakenVar x iden▹ = x
+weakenVar x (wπ▹ w) = S (weakenVar x w)
+weakenVar Z (w×▹ w) = Z
+weakenVar (S x) (w×▹ w) = S (weakenVar x w) 
 
-rename : ∀ {Γ Δ}
-         → (∀ {A} → Γ ∋ A → Δ ∋ A)
-         → (∀ {A} → Term Γ A → Term Δ A)
-rename ρ (Var x) = Var (ρ x)
-rename ρ (t ⊕ t₁) = rename ρ t ⊕ rename ρ t₁
-rename ρ (t ×ₚ t₁) = rename ρ t ×ₚ rename ρ t₁
-rename ρ (p₁ t) = p₁ (rename ρ t)
-rename ρ (p₂ t) = p₂ (rename ρ t)
-rename ρ (lam σ t) = lam σ (rename (extt ρ) t)
+weaken▹ : ∀{Γ Γ' τ} → Γ' ▹ Γ → Term Γ τ →  Term Γ' τ
+weaken▹ w (Var x)   = Var (weakenVar x w)
+weaken▹ w (t ⊕ t₁)  = weaken▹ w t  ⊕ weaken▹ w t₁ 
+weaken▹ w (t ×ₚ t₁) = weaken▹ w t ×ₚ weaken▹ w t₁ 
+weaken▹ w (p₁ t)    = p₁ (weaken▹ w t)
+weaken▹ w (p₂ t)    = p₂ (weaken▹ w t)
+weaken▹ w (lam σ t) = lam σ (weaken▹ (w×▹ w) t)
 
--- Lo mismo que extt pero para términos
+-- Debilitación de contexto de tipado
+
+weaken : ∀ {Γ A B} → Term Γ A 
+           → Term (Γ ,ₓ B) A
+weaken {Γ} t = weaken▹ (wπ▹ iden▹) t
+
 
 exts : ∀ {Γ Δ}
        → (∀ {A} →       Γ ∋ A →     Term Δ A)
        → (∀ {A B} → Γ ,ₓ B ∋ A → Term (Δ ,ₓ B) A)
 exts σ Z      =  Var Z
-exts σ (S x)  =  rename S_ (σ x)
+exts σ (S x)  =  weaken (σ x)
 
 -- Substitución simultánea dada una función de mapeo (multiple substitution)
 
@@ -50,15 +56,6 @@ _[_] {Γ} {A} {B} N M = sub {(Γ ,ₓ B)} {Γ} σ {A} N
     σ Z      =  M
     σ (S x)  = Var x
 
--- Debilitación de contexto de tipado
-
-weaken : ∀ {Γ A B} → Term Γ A 
-           → Term (Γ ,ₓ B) A
-weaken {Γ} t = rename ρ t
-    where
-    ρ : ∀ {z B} → Γ ∋ z 
-        → (Γ ,ₓ B) ∋ z
-    ρ s = S s
 
 {------------------------------------------------------------------------
 
@@ -86,3 +83,4 @@ data _≡ₜ_ : ∀ {Γ : Context} {T : Ty} → Term Γ T → Term Γ T → Set 
 
     β : ∀ {Γ : Context} {A B : Ty} → {e : Term (Γ ,ₓ A) B} → {x : Term Γ A} →
         ((lam A e) ⊕ x) ≡ₜ (e [ x ])
+ 

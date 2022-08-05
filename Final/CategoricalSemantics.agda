@@ -14,7 +14,7 @@ module Final.CategoricalSemantics {a}{b}{C : Cat {a}{b}}
 
 
 open import Library hiding (_×_ ; curry ; uncurry)
-
+open import  Categories.Products.Properties hasProducts
 open Cat C
 open Products hasProducts
 open Terminal hasTerminal
@@ -46,6 +46,69 @@ find (Γ ,ₓ x) (S v) = (find Γ v) ∙ π₁
 ⟦ Γ ⊢ (p₂ t) ⟧ₗ = π₂ ∙ ⟦ Γ ⊢ t ⟧ₗ
 ⟦ Γ ⊢ (lam σ t) ⟧ₗ = curry ⟦ (Γ ,ₓ σ) ⊢ t ⟧ₗ
 
+-- Interpretación de weakenings como flechas CCC
+
+⟦_⟧w  : ∀{Γ Γ'} → Γ' ▹ Γ → Hom ⟦ Γ' ⟧ₓ ⟦ Γ ⟧ₓ
+⟦ iden▹ ⟧w = iden
+⟦ wπ▹ m ⟧w = ⟦ m ⟧w ∙  π₁
+⟦ w×▹ m ⟧w = pair ⟦ m ⟧w iden
+
+
+
+weakenVarLemma : ∀{Γ Γ' A} → (x : Γ ∋ A) →  (w : Γ' ▹ Γ) 
+               → find Γ' (weakenVar x w) ≅ find Γ x ∙ ⟦ w ⟧w
+weakenVarLemma x iden▹ = sym idr
+weakenVarLemma x (wπ▹ w) = trans (congl (weakenVarLemma x w)) ass
+weakenVarLemma Z (w×▹ w) =  trans (sym idl) (sym π₂-pair)
+weakenVarLemma (S x) (w×▹ w) = trans (trans (congl (weakenVarLemma x w)) ass) (trans (congr (sym π₁-pair)) (sym ass))
+
+curry-prop₁ : ∀{X X' Y Z} → {g : Hom X' X}{f : Hom (X × Y) Z} →
+              curry f ∙ g ≅ curry (f ∙ pair g iden)
+curry-prop₁ {g = g} {f} = proof 
+                              curry f ∙ g
+                            ≅⟨ sym idl ⟩
+                              iden ∙ curry f ∙ g
+                            ≅⟨ congl (sym lawcurry2) ⟩
+                              curry (uncurry iden) ∙  curry f ∙ g
+                            ≅⟨ cong (λ x → curry x ∙ curry f ∙ g) (sym idl) ⟩
+                              curry (iden ∙ uncurry iden) ∙  curry f ∙ g
+                            ≅⟨ nat-curry ⟩
+                              curry (iden ∙ f ∙ pair g iden)
+                            ≅⟨ cong (λ x → curry x) idl ⟩
+                              curry (f ∙ pair g iden) 
+                            ∎
+
+-- lema de weakening: hacer weakening y luego interpretar es lo mismo
+-- que interpretar y componener con la interpretación del weakening
+weakeningLemma : ∀{Γ Γ' τ} → (w : Γ' ▹ Γ) → (t : Term Γ τ) 
+               → ⟦ Γ' ⊢ weaken▹ w t ⟧ₗ ≅ ⟦ Γ ⊢ t ⟧ₗ ∙ ⟦ w ⟧w 
+weakeningLemma w (Var x) = weakenVarLemma x w
+weakeningLemma {Γ} {Γ'} w (t₁ ⊕ t₂) = proof 
+                  (apply ∙ ⟨ ⟦ Γ' ⊢ weaken▹ w t₁ ⟧ₗ , ⟦ Γ' ⊢ weaken▹ w t₂ ⟧ₗ ⟩)
+               ≅⟨ congr (cong₂ ⟨_,_⟩ (weakeningLemma w t₁) (weakeningLemma w t₂)) ⟩
+                 (apply ∙ ⟨ ⟦ Γ ⊢ t₁ ⟧ₗ ∙ ⟦ w ⟧w , ⟦ Γ ⊢ t₂ ⟧ₗ ∙ ⟦ w ⟧w ⟩)
+               ≅⟨ congr (sym fusion) ⟩ 
+                 (apply ∙ ⟨ ⟦ Γ ⊢ t₁ ⟧ₗ , ⟦ Γ ⊢ t₂ ⟧ₗ ⟩ ∙ ⟦ w ⟧w) 
+               ≅⟨ sym ass ⟩
+                 ⟦ Γ ⊢ t₁ ⊕ t₂ ⟧ₗ ∙ ⟦ w ⟧w
+                ∎ 
+weakeningLemma {Γ} {Γ'} w (t₁ ×ₚ t₂) = proof 
+                ⟨ ⟦ Γ' ⊢ weaken▹ w t₁ ⟧ₗ , ⟦ Γ' ⊢ weaken▹ w t₂ ⟧ₗ ⟩
+              ≅⟨ cong₂ ⟨_,_⟩ (weakeningLemma w t₁) (weakeningLemma w t₂) ⟩
+                 ⟨ ⟦ Γ ⊢ t₁ ⟧ₗ ∙ ⟦ w ⟧w , ⟦ Γ ⊢ t₂ ⟧ₗ ∙ ⟦ w ⟧w ⟩
+               ≅⟨ sym fusion ⟩ 
+                 (⟨ ⟦ Γ ⊢ t₁ ⟧ₗ , ⟦ Γ ⊢ t₂ ⟧ₗ ⟩ ∙ ⟦ w ⟧w)
+                ∎ 
+weakeningLemma w (p₁ t₁) = trans (congr (weakeningLemma w t₁)) (sym ass)
+weakeningLemma w (p₂ t₁) = trans (congr (weakeningLemma w t₁)) (sym ass)
+weakeningLemma {Γ} {Γ'} w (lam σ t₁) = proof 
+                 curry ⟦ Γ' ,ₓ σ ⊢ weaken▹ (w×▹ w) t₁ ⟧ₗ
+                ≅⟨ cong curry (weakeningLemma (w×▹ w) t₁) ⟩
+                  curry (⟦ Γ ,ₓ σ ⊢ t₁ ⟧ₗ ∙ pair ⟦ w ⟧w iden)
+                ≅⟨ sym curry-prop₁ ⟩
+                  (curry ⟦ Γ ,ₓ σ ⊢ t₁ ⟧ₗ ∙ ⟦ w ⟧w)  
+                ∎
+
 {-
     A partir de acá demostramos que nuestra interpretación preserva las siguientes
     ecuaciones del lambda calculo formalizadas más arriba:
@@ -60,10 +123,11 @@ find (Γ ,ₓ x) (S v) = (find Γ v) ∙ π₁
 
 -- TODO: this :(
 
-open import Categories.Products.Properties hasProducts 
-       using (comp-pair ; iden-pair ; iden-comp-pair ; fusion-pair ; fusion)
 
+--open import Categories.Products.Properties hasProducts 
+  --     using (comp-pair ; iden-pair ; iden-comp-pair ; fusion-pair ; fusion)
 
+{-
 subs-proof : ∀ {Γ : Context} {A A' : Ty} → {t : Term (Γ ,ₓ A) A'} → {t' : Term Γ A} →
                ⟦ Γ ⊢ t [ t' ] ⟧ₗ ≅ ⟦ (Γ ,ₓ A) ⊢ t ⟧ₗ ∙ ⟨ iden {⟦ Γ ⟧ₓ} , ⟦ Γ ⊢ t' ⟧ₗ ⟩
 subs-proof {Γ} {A} {A'} {Var Z} {t'} = 
@@ -171,86 +235,17 @@ subs-proof {Γ} {A} {.(σ ⇛ _)} {lam σ t} {t'} = {!   !}
     ≅⟨ sym subs-proof ⟩ -- usar la demostracion de la igualdad de la substitucion
     ⟦ Γ ⊢ e [ x ] ⟧ₗ 
     ∎
+-}
 
-η-lema₁ : ∀ {Γ : Context} {A B : Ty} → {u : Term Γ B} →
+η-lema₁ : ∀ {Γ : Context} {A B : Ty} → (u : Term Γ B) →
             ⟦ Γ ,ₓ A ⊢ weaken u ⟧ₗ ≅ ⟦ Γ ⊢ u ⟧ₗ ∙ π₁
-η-lema₁ {Γ} {A} {B} {Var x} = 
-    proof 
-        ⟦ Γ ,ₓ A ⊢ weaken (Var x) ⟧ₗ 
-        ≅⟨ refl ⟩ 
-        ⟦ Γ ,ₓ A ⊢ Var (S x) ⟧ₗ
-        ≅⟨ refl ⟩
-        find (Γ ,ₓ A) (S x)
-        ≅⟨ refl ⟩
-        (find Γ x) ∙ π₁
-        ≅⟨ refl ⟩
-        (⟦ Γ ⊢ Var x ⟧ₗ ∙ π₁) ∎
-η-lema₁ {Γ} {A} {B} {u ⊕ u₁} = 
-    proof 
-        ⟦ Γ ,ₓ A ⊢ weaken (u ⊕ u₁) ⟧ₗ 
-        ≅⟨ refl ⟩ 
-        ⟦ Γ ,ₓ A ⊢ (weaken u) ⊕ (weaken u₁) ⟧ₗ
-        ≅⟨ refl ⟩
-        apply ∙ ⟨ ⟦ Γ ,ₓ A ⊢ (weaken u) ⟧ₗ , ⟦ Γ ,ₓ A ⊢ (weaken u₁) ⟧ₗ ⟩
-        ≅⟨ Library.cong₂ (λ x y → apply ∙ ⟨ x , y ⟩) (η-lema₁ {u = u}) (η-lema₁ {u = u₁}) ⟩
-        apply ∙ ⟨ ⟦ Γ ⊢ u ⟧ₗ ∙ π₁ , ⟦ Γ ⊢ u₁ ⟧ₗ ∙ π₁ ⟩
-        ≅⟨ (cong (λ x → apply ∙ x) (sym fusion)) ⟩
-        apply ∙ (⟨ ⟦ Γ ⊢ u ⟧ₗ , ⟦ Γ ⊢ u₁ ⟧ₗ ⟩ ∙ π₁)
-        ≅⟨ sym ass ⟩
-        (apply ∙ ⟨ ⟦ Γ ⊢ u ⟧ₗ , ⟦ Γ ⊢ u₁ ⟧ₗ ⟩) ∙ π₁
-        ≅⟨ refl ⟩
-        (⟦ Γ ⊢ u ⊕ u₁ ⟧ₗ ∙ π₁) 
-        ∎
-η-lema₁ {Γ} {A} {B} {u ×ₚ u₁} = 
-    proof 
-        ⟦ Γ ,ₓ A ⊢ weaken (u ×ₚ u₁) ⟧ₗ 
-        ≅⟨ refl ⟩ 
-        ⟦ Γ ,ₓ A ⊢ (weaken u) ×ₚ (weaken u₁) ⟧ₗ
-        ≅⟨ refl ⟩
-        ⟨ ⟦ Γ ,ₓ A ⊢ (weaken u) ⟧ₗ , ⟦ Γ ,ₓ A ⊢ (weaken u₁) ⟧ₗ ⟩
-        ≅⟨ Library.cong₂ (λ x y → ⟨ x , y ⟩) (η-lema₁ {u = u}) (η-lema₁ {u = u₁}) ⟩
-        ⟨ ⟦ Γ ⊢ u ⟧ₗ ∙ π₁ , ⟦ Γ ⊢ u₁ ⟧ₗ ∙ π₁ ⟩
-        ≅⟨ sym fusion ⟩
-        ⟨ ⟦ Γ ⊢ u ⟧ₗ , ⟦ Γ ⊢ u₁ ⟧ₗ ⟩ ∙ π₁
-        ≅⟨ refl ⟩
-        ⟦ Γ ⊢ u ×ₚ u₁ ⟧ₗ ∙ π₁
-    ∎ 
-η-lema₁ {Γ} {A} {B} {p₁ u} = 
-    proof 
-        ⟦ Γ ,ₓ A ⊢ weaken (p₁ u) ⟧ₗ 
-        ≅⟨ refl ⟩
-        ⟦ Γ ,ₓ A ⊢ p₁ (weaken u) ⟧ₗ
-        ≅⟨ refl ⟩
-        π₁ ∙ ⟦ Γ ,ₓ A ⊢ (weaken u) ⟧ₗ
-        ≅⟨ cong (λ x → π₁ ∙ x) (η-lema₁ {u = u}) ⟩
-        π₁ ∙ (⟦ Γ ⊢ u ⟧ₗ ∙ π₁)
-        ≅⟨ sym ass ⟩
-        (π₁ ∙ ⟦ Γ ⊢ u ⟧ₗ) ∙ π₁
-        ≅⟨ refl ⟩
-        (⟦ Γ ⊢ p₁ u ⟧ₗ ∙ π₁) 
-    ∎
+η-lema₁ u = trans (weakeningLemma (wπ▹ iden▹) u) (congr idl)
 
-η-lema₁ {Γ} {A} {B} {p₂ u} = 
-    proof 
-        ⟦ Γ ,ₓ A ⊢ weaken (p₂ u) ⟧ₗ 
-        ≅⟨ refl ⟩ 
-        ⟦ Γ ,ₓ A ⊢ p₂ (weaken u) ⟧ₗ
-        ≅⟨ refl ⟩
-        π₂ ∙ ⟦ Γ ,ₓ A ⊢ (weaken u) ⟧ₗ
-        ≅⟨ cong (λ x → π₂ ∙ x) (η-lema₁ {u = u}) ⟩
-        π₂ ∙ (⟦ Γ ⊢ u ⟧ₗ ∙ π₁)
-        ≅⟨ sym ass ⟩
-        (π₂ ∙ ⟦ Γ ⊢ u ⟧ₗ) ∙ π₁
-        ≅⟨ refl ⟩
-        (⟦ Γ ⊢ p₂ u ⟧ₗ ∙ π₁) 
-    ∎
-η-lema₁ {Γ} {A} {B} {lam σ u} = {!   !}
-
-η-lema₂ : ∀ {Γ : Context} {A B : Ty} → {u : Term Γ (A ⇛ B)} →
+η-lema₂ : ∀ {Γ : Context} {A B : Ty} → (u : Term Γ (A ⇛ B)) →
         curry (apply ∙ (pair ⟦ Γ ⊢ u ⟧ₗ (iden {⟦ A ⟧ₜ}))) ≅ ⟦ Γ ⊢ u ⟧ₗ
-η-lema₂ {Γ = Γ} {u = u} = proof 
+η-lema₂ {Γ = Γ} u = proof 
     curry (apply ∙ pair ⟦ Γ ⊢ u ⟧ₗ iden) 
-    ≅⟨ cong (λ x → curry x) (Properties.uncurry-exp hasProducts T hasTerminal isCCC) ⟩ 
+    ≅⟨ cong curry (Properties.uncurry-exp hasProducts T hasTerminal isCCC) ⟩ 
     curry (uncurry ⟦ Γ ⊢ u ⟧ₗ) 
     ≅⟨ lawcurry2 ⟩ 
     ⟦ Γ ⊢ u ⟧ₗ 
@@ -260,14 +255,14 @@ subs-proof {Γ} {A} {.(σ ⇛ _)} {lam σ t} {t'} = {!   !}
         curry (apply ∙ ⟨ ⟦ Γ ,ₓ A ⊢ weaken u ⟧ₗ , π₂ ⟩) ≅ ⟦ Γ ⊢ u ⟧ₗ
 η-proof {Γ} {A} {B} {u} = proof 
     curry (apply ∙ ⟨ ⟦ Γ ,ₓ A ⊢ weaken u ⟧ₗ , π₂ ⟩) 
-    ≅⟨ cong (λ x → curry (apply ∙ ⟨ x , π₂ ⟩)) η-lema₁ ⟩ 
+    ≅⟨ cong (λ x → curry (apply ∙ ⟨ x , π₂ ⟩)) (η-lema₁ u) ⟩ 
     curry (apply ∙ ⟨ ⟦ Γ ⊢ u ⟧ₗ ∙ π₁ , π₂ ⟩) 
     ≅⟨ cong (λ x → curry (uncurry iden ∙ ⟨ ⟦ Γ ⊢ u ⟧ₗ ∙ π₁ , x ⟩)) (sym idl) ⟩
     curry (apply ∙ pair ⟦ Γ ⊢ u ⟧ₗ iden) 
-    ≅⟨ η-lema₂ ⟩ 
+    ≅⟨ η-lema₂ u ⟩ 
     ⟦ Γ ⊢ u ⟧ₗ 
     ∎
-
+{-
 -- Finalmente demostramos Soundness
 
 soundness : ∀ {τ} → {Γ : Context} → {t : Term Γ τ} → {u : Term Γ τ} →
@@ -277,3 +272,5 @@ soundness pr₂ = law2
 soundness pr₃ = sym (law3 refl refl)
 soundness β = β-proof
 soundness η = η-proof
+
+-}   
