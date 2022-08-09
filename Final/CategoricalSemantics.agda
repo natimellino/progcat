@@ -228,13 +228,33 @@ substitutionSemantics {Γ} {Δ} (lam σ₁ t₁) σ =
 
 singleSubstitutionSemantics : ∀ {Γ : Context} {A A' : Ty} → {t : Term (Γ ,ₓ A) A'} → {t' : Term Γ A} →
                ⟦ Γ ⊢ t [ t' ] ⟧ₗ ≅ ⟦ (Γ ,ₓ A) ⊢ t ⟧ₗ ∙ ⟨ iden {⟦ Γ ⟧ₓ} , ⟦ Γ ⊢ t' ⟧ₗ ⟩
-singleSubstitutionSemantics = {!   !}
+singleSubstitutionSemantics {Γ} {A} {A'} {t} {t'} = 
+    proof
+    ⟦ Γ ⊢ t [ t' ] ⟧ₗ
+    ≅⟨ cong (λ x → ⟦ Γ ⊢ x ⟧ₗ) aux ⟩
+    ⟦ Γ ⊢ sub σ t ⟧ₗ
+    ≅⟨ substitutionSemantics t σ ⟩
+    ⟦ Γ ,ₓ A ⊢ t ⟧ₗ ∙ ⟦ σ ⟧s
+    ≅⟨ refl ⟩
+    ⟦ Γ ,ₓ A ⊢ t ⟧ₗ ∙ ⟨ ⟦ weakσ σ ⟧s , ⟦ Γ ⊢ (σ Z) ⟧ₗ ⟩
+    ≅⟨ refl ⟩
+    ⟦ Γ ,ₓ A ⊢ t ⟧ₗ ∙ ⟨ ⟦ weakσ σ ⟧s , ⟦ Γ ⊢ t' ⟧ₗ ⟩
+    ≅⟨ congr (cong (λ x → ⟨ x , ⟦ Γ ⊢ t' ⟧ₗ ⟩) aux2) ⟩
+    ⟦ Γ ,ₓ A ⊢ t ⟧ₗ ∙ ⟨ iden , ⟦ Γ ⊢ t' ⟧ₗ ⟩
+    ∎
+    where σ : Γ ⊢s (Γ ,ₓ A)
+          σ Z = t'
+          σ (S x) = Var x -- TODO: mmm no estoy segura de que sea asi
+          aux :  t [ t' ] ≅ sub σ t
+          aux = {!   !}
+          aux2 : ⟦ weakσ σ ⟧s ≅ iden
+          aux2 = {!   !}
 
 --open import Categories.Products.Properties hasProducts 
   --     using (comp-pair ; iden-pair ; iden-comp-pair ; fusion-pair ; fusion)
 
 -- open import Properties
-{-
+
 β-proof : ∀ {Γ : Context} {A B : Ty} → {e : Term (Γ ,ₓ A) B} → {x : Term Γ A} →
             ⟦ Γ ⊢ lam A e ⊕ x ⟧ₗ ≅ ⟦ Γ ⊢ e [ x ] ⟧ₗ
 β-proof {Γ} {A} {B} {e} {x} = proof 
@@ -245,10 +265,10 @@ singleSubstitutionSemantics = {!   !}
     (apply ∙ pair (curry ⟦ Γ ,ₓ A ⊢ e ⟧ₗ) iden) ∙ ⟨ iden , ⟦ Γ ⊢ x ⟧ₗ ⟩ 
     ≅⟨ congl (Properties.curry-exp hasProducts T hasTerminal isCCC) ⟩
     ⟦ Γ ,ₓ A ⊢ e ⟧ₗ ∙ ⟨ iden , ⟦ Γ ⊢ x ⟧ₗ ⟩
-    ≅⟨ sym subs-proof ⟩ -- usar la demostracion de la igualdad de la substitucion
+    ≅⟨ sym singleSubstitutionSemantics ⟩ -- usar la demostracion de la igualdad de la substitucion
     ⟦ Γ ⊢ e [ x ] ⟧ₗ 
     ∎
--}
+
 
 η-lema₁ : ∀ {Γ : Context} {A B : Ty} → (u : Term Γ B) →
             ⟦ Γ ,ₓ A ⊢ weaken u ⟧ₗ ≅ ⟦ Γ ⊢ u ⟧ₗ ∙ π₁
