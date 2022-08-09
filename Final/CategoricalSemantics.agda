@@ -109,6 +109,16 @@ weakeningLemma {Γ} {Γ'} w (lam σ t₁) = proof
                   (curry ⟦ Γ ,ₓ σ ⊢ t₁ ⟧ₗ ∙ ⟦ w ⟧w)  
                 ∎
 
+_⊢s_ : (Δ Γ : Context) → Set
+_⊢s_ Δ Γ = (∀ {A} → Γ ∋ A → Term Δ A)
+
+weakσ : ∀ {Δ Γ A} → (σ : Δ ⊢s (Γ ,ₓ A)) → Δ ⊢s Γ
+weakσ σ x = σ (S x)
+
+⟦_⟧s : {Δ Γ : Context} → (Δ ⊢s Γ) → Hom ⟦ Δ ⟧ₓ ⟦ Γ ⟧ₓ
+⟦_⟧s {Δ} {∅} σ = t
+⟦_⟧s {Δ} {Γ ,ₓ x} σ = ⟨ ⟦ weakσ σ ⟧s , ⟦ Δ ⊢ (σ Z) ⟧ₗ ⟩
+
 {-
     A partir de acá demostramos que nuestra interpretación preserva las siguientes
     ecuaciones del lambda calculo formalizadas más arriba:
@@ -121,107 +131,110 @@ weakeningLemma {Γ} {Γ'} w (lam σ t₁) = proof
 
 -}
 
--- TODO: this :(
+substitutionSemantics : ∀ {Γ Δ : Context} {A : Ty} → (t : Term Γ A) → (σ : Δ ⊢s Γ) →
+           ⟦ Δ ⊢ sub σ t ⟧ₗ ≅ ⟦ Γ ⊢ t ⟧ₗ ∙ ⟦ σ ⟧s
+substitutionSemantics {Γ ,ₓ x₁} (Var Z) σ = sym law2
+substitutionSemantics {Γ ,ₓ x₁} {Δ} (Var (S x)) σ = 
+  proof 
+    ⟦ Δ ⊢ sub σ (Var (S x)) ⟧ₗ 
+    ≅⟨ refl ⟩ 
+    ⟦ Δ ⊢ σ (S x) ⟧ₗ
+    ≅⟨ {!   !} ⟩
+    ⟦ Γ ⊢ (Var x) ⟧ₗ ∙ ⟦ weakσ σ ⟧s
+    ≅⟨ refl ⟩
+    (find Γ x) ∙ ⟦ weakσ σ ⟧s
+    ≅⟨ congr (sym law1) ⟩
+    (find Γ x) ∙ (π₁ ∙ ⟨ ⟦ weakσ σ ⟧s , ⟦ Δ ⊢ (σ Z) ⟧ₗ ⟩) 
+    ≅⟨ sym ass ⟩
+    (find Γ x ∙ π₁) ∙ ⟨ ⟦ weakσ σ ⟧s , ⟦ Δ ⊢ σ Z ⟧ₗ ⟩
+    ≅⟨ refl ⟩
+    find (Γ ,ₓ x₁) (S x) ∙ ⟨ ⟦ weakσ σ ⟧s , ⟦ Δ ⊢ σ Z ⟧ₗ ⟩
+    ≅⟨ refl ⟩
+    find (Γ ,ₓ x₁) (S x) ∙ ⟦ σ ⟧s
+    ≅⟨ refl ⟩
+    ⟦ Γ ,ₓ x₁ ⊢ (Var (S x)) ⟧ₗ ∙ ⟦ σ ⟧s
+    ∎
+substitutionSemantics {Γ} {Δ} (t₁ ⊕ t₂) σ = 
+  proof 
+  ⟦ Δ ⊢ sub σ (t₁ ⊕ t₂) ⟧ₗ
+  ≅⟨ refl ⟩
+  ⟦ Δ ⊢ (sub σ t₁) ⊕ (sub σ t₂) ⟧ₗ
+  ≅⟨ refl ⟩
+  apply ∙ ⟨ ⟦ Δ ⊢ (sub σ t₁) ⟧ₗ , ⟦ Δ ⊢ (sub σ t₂) ⟧ₗ ⟩
+  ≅⟨ congr (cong₂ (λ x y → ⟨ x , y ⟩) (substitutionSemantics t₁ σ) (substitutionSemantics t₂ σ)) ⟩
+  apply ∙ ⟨ ⟦ Γ ⊢ t₁ ⟧ₗ ∙ ⟦ σ ⟧s , ⟦ Γ ⊢ t₂ ⟧ₗ ∙ ⟦ σ ⟧s ⟩
+  ≅⟨ congr (sym fusion) ⟩
+  apply ∙ (⟨ ⟦ Γ ⊢ t₁ ⟧ₗ , ⟦ Γ ⊢ t₂ ⟧ₗ ⟩ ∙ ⟦ σ ⟧s)
+  ≅⟨ sym ass ⟩
+  (apply ∙ ⟨ ⟦ Γ ⊢ t₁ ⟧ₗ , ⟦ Γ ⊢ t₂ ⟧ₗ ⟩) ∙ ⟦ σ ⟧s 
+  ≅⟨ refl ⟩
+  ⟦ Γ ⊢ t₁ ⊕ t₂ ⟧ₗ ∙ ⟦ σ ⟧s
+  ∎
+substitutionSemantics {Γ} {Δ} (t₁ ×ₚ t₂) σ = 
+  proof 
+  ⟦ Δ ⊢ sub σ (t₁ ×ₚ t₂) ⟧ₗ
+  ≅⟨ refl ⟩
+  ⟦ Δ ⊢ (sub σ t₁) ×ₚ (sub σ t₂) ⟧ₗ
+  ≅⟨ refl ⟩
+  ⟨ ⟦ Δ ⊢ (sub σ t₁) ⟧ₗ , ⟦ Δ ⊢ (sub σ t₂) ⟧ₗ ⟩
+  ≅⟨ cong₂ (λ x y → ⟨ x , y ⟩) (substitutionSemantics t₁ σ) (substitutionSemantics t₂ σ) ⟩
+  ⟨ ⟦ Γ ⊢ t₁ ⟧ₗ ∙ ⟦ σ ⟧s , ⟦ Γ ⊢ t₂ ⟧ₗ ∙ ⟦ σ ⟧s ⟩
+  ≅⟨ sym fusion ⟩
+  ⟨ ⟦ Γ ⊢ t₁ ⟧ₗ , ⟦ Γ ⊢ t₂ ⟧ₗ ⟩ ∙ ⟦ σ ⟧s
+  ≅⟨ refl ⟩
+  ⟦ Γ ⊢ t₁ ×ₚ t₂ ⟧ₗ ∙ ⟦ σ ⟧s 
+  ∎
+substitutionSemantics {Γ} {Δ} (p₁ t₁) σ =
+  proof
+  ⟦ Δ ⊢ sub σ (p₁ t₁) ⟧ₗ
+  ≅⟨ refl ⟩
+  ⟦ Δ ⊢ p₁ (sub σ t₁) ⟧ₗ
+  ≅⟨ refl ⟩
+  π₁ ∙ ⟦ Δ ⊢ sub σ t₁ ⟧ₗ
+  ≅⟨ congr (substitutionSemantics t₁ σ) ⟩
+  π₁ ∙ (⟦ Γ ⊢ t₁ ⟧ₗ ∙ ⟦ σ ⟧s)
+  ≅⟨ sym ass ⟩
+  (π₁ ∙ ⟦ Γ ⊢ t₁ ⟧ₗ) ∙ ⟦ σ ⟧s
+  ≅⟨ refl ⟩
+  ⟦ Γ ⊢ p₁ t₁ ⟧ₗ ∙ ⟦ σ ⟧s 
+  ∎
+substitutionSemantics {Γ} {Δ} (p₂ t₁) σ = 
+  proof
+  ⟦ Δ ⊢ sub σ (p₂ t₁) ⟧ₗ
+  ≅⟨ refl ⟩
+  ⟦ Δ ⊢ p₂ (sub σ t₁) ⟧ₗ
+  ≅⟨ refl ⟩
+  π₂ ∙ ⟦ Δ ⊢ sub σ t₁ ⟧ₗ
+  ≅⟨ congr (substitutionSemantics t₁ σ) ⟩
+  π₂ ∙ (⟦ Γ ⊢ t₁ ⟧ₗ ∙ ⟦ σ ⟧s)
+  ≅⟨ sym ass ⟩
+  (π₂ ∙ ⟦ Γ ⊢ t₁ ⟧ₗ) ∙ ⟦ σ ⟧s
+  ≅⟨ refl ⟩
+  ⟦ Γ ⊢ p₂ t₁ ⟧ₗ ∙ ⟦ σ ⟧s 
+  ∎
+substitutionSemantics {Γ} {Δ} (lam σ₁ t₁) σ = 
+  proof 
+    ⟦ Δ ⊢ sub σ (lam σ₁ t₁) ⟧ₗ
+    ≅⟨ refl ⟩
+    ⟦ Δ ⊢ lam σ₁ (sub (exts σ) t₁) ⟧ₗ
+    ≅⟨ refl ⟩
+    curry ⟦ Δ ,ₓ σ₁ ⊢ (sub (exts σ) t₁) ⟧ₗ
+    ≅⟨ cong curry (substitutionSemantics t₁ ((exts σ))) ⟩
+    curry (⟦ Γ ,ₓ σ₁ ⊢ t₁ ⟧ₗ ∙ ⟦ (exts σ) ⟧s)
+    ≅⟨ {!   !} ⟩
+    {!   !}
+    ≅⟨ {!   !} ⟩
+    {!   !} ∎
 
+singleSubstitutionSemantics : ∀ {Γ : Context} {A A' : Ty} → {t : Term (Γ ,ₓ A) A'} → {t' : Term Γ A} →
+               ⟦ Γ ⊢ t [ t' ] ⟧ₗ ≅ ⟦ (Γ ,ₓ A) ⊢ t ⟧ₗ ∙ ⟨ iden {⟦ Γ ⟧ₓ} , ⟦ Γ ⊢ t' ⟧ₗ ⟩
+singleSubstitutionSemantics = {!   !}
 
 --open import Categories.Products.Properties hasProducts 
   --     using (comp-pair ; iden-pair ; iden-comp-pair ; fusion-pair ; fusion)
 
-{-
-subs-proof : ∀ {Γ : Context} {A A' : Ty} → {t : Term (Γ ,ₓ A) A'} → {t' : Term Γ A} →
-               ⟦ Γ ⊢ t [ t' ] ⟧ₗ ≅ ⟦ (Γ ,ₓ A) ⊢ t ⟧ₗ ∙ ⟨ iden {⟦ Γ ⟧ₓ} , ⟦ Γ ⊢ t' ⟧ₗ ⟩
-subs-proof {Γ} {A} {A'} {Var Z} {t'} = 
-    proof 
-        ⟦ Γ ⊢ Var Z [ t' ] ⟧ₗ 
-        ≅⟨ refl ⟩ 
-        ⟦ Γ ⊢ t' ⟧ₗ
-        ≅⟨ sym law2 ⟩
-        π₂ ∙ ⟨ iden , ⟦ Γ ⊢ t' ⟧ₗ ⟩
-        ≅⟨ refl ⟩
-        (find (Γ ,ₓ A) Z) ∙ ⟨ iden , ⟦ Γ ⊢ t' ⟧ₗ ⟩
-        ≅⟨ refl ⟩
-        ⟦ (Γ ,ₓ A) ⊢ Var Z ⟧ₗ ∙ ⟨ iden , ⟦ Γ ⊢ t' ⟧ₗ ⟩
-        ∎
-subs-proof {Γ} {A} {A'} {Var (S x)} {t'} = 
-    proof 
-        ⟦ Γ ⊢ Var (S x) [ t' ] ⟧ₗ 
-        ≅⟨ refl ⟩ 
-        ⟦ Γ ⊢ Var x ⟧ₗ
-        ≅⟨ refl ⟩
-        find Γ x
-        ≅⟨ sym idr ⟩
-        (find Γ x) ∙ iden
-        ≅⟨ cong (λ y →  (find Γ x) ∙ y) (sym law1) ⟩
-        find Γ x ∙ (π₁ ∙ ⟨ iden , ⟦ Γ ⊢ t' ⟧ₗ ⟩)
-        ≅⟨ sym ass ⟩
-        (find Γ x ∙ π₁) ∙ ⟨ iden , ⟦ Γ ⊢ t' ⟧ₗ ⟩
-        ≅⟨ refl ⟩
-        (find (Γ ,ₓ A) (S x)) ∙ ⟨ iden , ⟦ Γ ⊢ t' ⟧ₗ ⟩
-        ≅⟨ refl ⟩
-        ⟦ (Γ ,ₓ A) ⊢ Var (S x) ⟧ₗ ∙ ⟨ iden , ⟦ Γ ⊢ t' ⟧ₗ ⟩ 
-        ∎
-subs-proof {Γ} {A} {A'} {t ⊕ t₁} {t'} = 
-    proof 
-        ⟦ Γ ⊢ (t ⊕ t₁) [ t' ] ⟧ₗ 
-        ≅⟨ cong (λ x → ⟦ Γ ⊢ x ⟧ₗ) refl ⟩ 
-        ⟦ Γ ⊢ (t [ t' ]) ⊕ (t₁ [ t' ]) ⟧ₗ
-        ≅⟨ refl ⟩
-        apply ∙ ⟨ ⟦ Γ ⊢ (t [ t' ]) ⟧ₗ , ⟦ Γ ⊢ (t₁ [ t' ]) ⟧ₗ ⟩
-        ≅⟨ Library.cong₂ (λ x y → apply ∙ ⟨ x , y ⟩) (subs-proof {t = t}) (subs-proof {t = t₁}) ⟩
-        apply ∙ ⟨ ⟦ Γ ,ₓ A ⊢ t ⟧ₗ ∙ ⟨ iden , ⟦ Γ ⊢ t' ⟧ₗ ⟩ , ⟦ Γ ,ₓ A ⊢ t₁ ⟧ₗ ∙ ⟨ iden , ⟦ Γ ⊢ t' ⟧ₗ ⟩ ⟩
-        ≅⟨ cong (λ x → apply ∙ x) (sym fusion)⟩
-        apply ∙ (⟨ ⟦ Γ ,ₓ A ⊢ t ⟧ₗ , ⟦ Γ ,ₓ A ⊢ t₁ ⟧ₗ ⟩ ∙ ⟨ iden , ⟦ Γ ⊢ t' ⟧ₗ ⟩)
-        ≅⟨ sym ass ⟩
-        (apply ∙ ⟨ ⟦ Γ ,ₓ A ⊢ t ⟧ₗ , ⟦ Γ ,ₓ A ⊢ t₁ ⟧ₗ ⟩) ∙ ⟨ iden , ⟦ Γ ⊢ t' ⟧ₗ ⟩
-        ≅⟨ refl ⟩
-        ⟦ (Γ ,ₓ A) ⊢ t ⊕ t₁ ⟧ₗ ∙ ⟨ iden , ⟦ Γ ⊢ t' ⟧ₗ ⟩
-        ∎
-subs-proof {Γ} {A} {.(_ ⊗ _)} {t ×ₚ t₁} {t'} = 
-    proof 
-        ⟦ Γ ⊢ (t ×ₚ t₁) [ t' ] ⟧ₗ 
-        ≅⟨ cong (λ x → ⟦ Γ ⊢ x ⟧ₗ) refl ⟩ 
-        ⟦ Γ ⊢ (t [ t' ]) ×ₚ (t₁ [ t' ]) ⟧ₗ
-        ≅⟨ refl ⟩
-        ⟨ ⟦ Γ ⊢ t [ t' ] ⟧ₗ , ⟦ Γ ⊢ t₁ [ t' ] ⟧ₗ ⟩
-        ≅⟨ Library.cong₂ (λ x y → ⟨ x , y ⟩) (subs-proof {t = t}) (subs-proof {t = t₁}) ⟩
-        ⟨ ⟦ Γ ,ₓ A ⊢ t ⟧ₗ ∙ ⟨ iden , ⟦ Γ ⊢ t' ⟧ₗ ⟩ , ⟦ Γ ,ₓ A ⊢ t₁ ⟧ₗ ∙ ⟨ iden , ⟦ Γ ⊢ t' ⟧ₗ ⟩ ⟩
-        ≅⟨ sym fusion ⟩
-        ⟨ ⟦ Γ ,ₓ A ⊢ t ⟧ₗ , ⟦ Γ ,ₓ A ⊢ t₁ ⟧ₗ ⟩ ∙ ⟨ iden , ⟦ Γ ⊢ t' ⟧ₗ ⟩
-        ≅⟨ refl ⟩
-        ⟦ Γ ,ₓ A ⊢ t ×ₚ t₁ ⟧ₗ ∙ ⟨ iden , ⟦ Γ ⊢ t' ⟧ₗ ⟩ 
-        ∎
-subs-proof {Γ} {A} {A'} {p₁ t} {t'} = 
-    proof 
-        ⟦ Γ ⊢ p₁ t [ t' ] ⟧ₗ 
-        ≅⟨ cong (λ x → ⟦ Γ ⊢ x ⟧ₗ) refl ⟩ 
-        ⟦ Γ ⊢ p₁ (t [ t' ]) ⟧ₗ
-        ≅⟨ refl ⟩
-        π₁ ∙ ⟦ Γ ⊢ t [ t' ] ⟧ₗ
-        ≅⟨ cong (λ x → π₁ ∙ x) (subs-proof {t = t}) ⟩
-        π₁ ∙ (⟦ Γ ,ₓ A ⊢ t ⟧ₗ ∙ ⟨ iden , ⟦ Γ ⊢ _ ⟧ₗ ⟩)
-        ≅⟨ sym ass ⟩
-        (π₁ ∙ ⟦ Γ ,ₓ A ⊢ t ⟧ₗ) ∙ ⟨ iden , ⟦ Γ ⊢ t' ⟧ₗ ⟩
-        ≅⟨ refl ⟩
-        ⟦ Γ ,ₓ A ⊢ p₁ t ⟧ₗ ∙ ⟨ iden , ⟦ Γ ⊢ t' ⟧ₗ ⟩ 
-        ∎
-subs-proof {Γ} {A} {A'} {p₂ t} {t'} =
-    proof 
-        ⟦ Γ ⊢ (p₂ t) [ t' ] ⟧ₗ
-        ≅⟨ cong (λ x → ⟦ Γ ⊢ x ⟧ₗ) refl ⟩ 
-        ⟦ Γ ⊢ p₂ (t [ t' ]) ⟧ₗ
-        ≅⟨ refl ⟩
-        π₂ ∙ ⟦ Γ ⊢ t [ t' ] ⟧ₗ
-        ≅⟨ cong (λ x → π₂ ∙ x) (subs-proof {t = t}) ⟩
-        π₂ ∙ (⟦ Γ ,ₓ A ⊢ t ⟧ₗ ∙ ⟨ iden , ⟦ Γ ⊢ _ ⟧ₗ ⟩)
-        ≅⟨ sym ass ⟩
-        (π₂ ∙ ⟦ Γ ,ₓ A ⊢ t ⟧ₗ) ∙ ⟨ iden , ⟦ Γ ⊢ t' ⟧ₗ ⟩
-        ≅⟨ refl ⟩
-        ⟦ Γ ,ₓ A ⊢ p₂ t ⟧ₗ ∙ ⟨ iden , ⟦ Γ ⊢ t' ⟧ₗ ⟩ 
-        ∎
-subs-proof {Γ} {A} {.(σ ⇛ _)} {lam σ t} {t'} = {!   !}
-
 -- open import Properties
-
+{-
 β-proof : ∀ {Γ : Context} {A B : Ty} → {e : Term (Γ ,ₓ A) B} → {x : Term Γ A} →
             ⟦ Γ ⊢ lam A e ⊕ x ⟧ₗ ≅ ⟦ Γ ⊢ e [ x ] ⟧ₗ
 β-proof {Γ} {A} {B} {e} {x} = proof 
