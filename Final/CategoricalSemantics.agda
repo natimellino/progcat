@@ -219,16 +219,16 @@ substitutionSemantics {Γ} {Δ} (lam σ₁ t₁) σ =
     ⟦ Δ ⊢ lam σ₁ (sub (exts σ) t₁) ⟧ₗ
     ≅⟨ refl ⟩
     curry ⟦ Δ ,ₓ σ₁ ⊢ (sub (exts σ) t₁) ⟧ₗ
-    ≅⟨ cong curry (substitutionSemantics t₁ ((exts σ))) ⟩
+    ≅⟨ cong curry (substitutionSemantics {Γ ,ₓ σ₁} {Δ ,ₓ σ₁} t₁ ((exts σ))) ⟩
     curry (⟦ Γ ,ₓ σ₁ ⊢ t₁ ⟧ₗ ∙ ⟦ (exts σ) ⟧s)
-    ≅⟨ {!   !} ⟩
-    {!   !}
-    ≅⟨ {!   !} ⟩
-    {!   !} ∎
+    ≅⟨ cong curry (congr (cong₂ ⟨_,_⟩ {!   !} (sym idl))) ⟩
+    curry (⟦ Γ ,ₓ σ₁ ⊢ t₁ ⟧ₗ ∙ pair ⟦ σ ⟧s iden)
+    ≅⟨ sym curry-prop₁ ⟩
+    (⟦ Γ ⊢ lam σ₁ t₁ ⟧ₗ ∙ ⟦ σ ⟧s) ∎
 
-singleSubstitutionSemantics : ∀ {Γ : Context} {A A' : Ty} → {t : Term (Γ ,ₓ A) A'} → {t' : Term Γ A} →
+singleSubstitutionSemantics : ∀ {Γ : Context} {A A' : Ty} → (t : Term (Γ ,ₓ A) A') → (t' : Term Γ A) →
                ⟦ Γ ⊢ t [ t' ] ⟧ₗ ≅ ⟦ (Γ ,ₓ A) ⊢ t ⟧ₗ ∙ ⟨ iden {⟦ Γ ⟧ₓ} , ⟦ Γ ⊢ t' ⟧ₗ ⟩
-singleSubstitutionSemantics {Γ} {A} {A'} {t} {t'} = 
+singleSubstitutionSemantics {Γ} {A} {A'} t t' = 
     proof
     ⟦ Γ ⊢ t [ t' ] ⟧ₗ
     ≅⟨ cong (λ x → ⟦ Γ ⊢ x ⟧ₗ) aux ⟩
@@ -265,7 +265,7 @@ singleSubstitutionSemantics {Γ} {A} {A'} {t} {t'} =
     (apply ∙ pair (curry ⟦ Γ ,ₓ A ⊢ e ⟧ₗ) iden) ∙ ⟨ iden , ⟦ Γ ⊢ x ⟧ₗ ⟩ 
     ≅⟨ congl (Properties.curry-exp hasProducts T hasTerminal isCCC) ⟩
     ⟦ Γ ,ₓ A ⊢ e ⟧ₗ ∙ ⟨ iden , ⟦ Γ ⊢ x ⟧ₗ ⟩
-    ≅⟨ sym singleSubstitutionSemantics ⟩ -- usar la demostracion de la igualdad de la substitucion
+    ≅⟨ sym (singleSubstitutionSemantics e x) ⟩ -- usar la demostracion de la igualdad de la substitucion
     ⟦ Γ ⊢ e [ x ] ⟧ₗ 
     ∎
 
