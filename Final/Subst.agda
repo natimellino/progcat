@@ -28,12 +28,22 @@ weaken : ∀ {Γ A B} → Term Γ A
            → Term (Γ ,ₓ B) A
 weaken {Γ} t = weaken▹ (wπ▹ iden▹) t
 
+_⊢s_ : (Δ Γ : Context) → Set
+_⊢s_ Δ Γ = (∀ {A} → Γ ∋ A → Term Δ A)
+
+weakσ : ∀ {Δ Γ A} → (σ : Δ ⊢s (Γ ,ₓ A)) → Δ ⊢s Γ
+weakσ σ x = σ (S x)
 
 exts : ∀ {Γ Δ}
-       → (∀ {A} →       Γ ∋ A →     Term Δ A)
-       → (∀ {A B} → Γ ,ₓ B ∋ A → Term (Δ ,ₓ B) A)
+       → Δ ⊢s Γ
+       → ∀{B} → (Δ ,ₓ B) ⊢s (Γ ,ₓ B)
 exts σ Z      =  Var Z
 exts σ (S x)  =  weaken (σ x)
+
+
+single : ∀{Γ A} → Term Γ A → Γ ⊢s (Γ ,ₓ A)
+single t Z = t
+single _ (S x) = Var x 
 
 -- Substitución simultánea dada una función de mapeo (multiple substitution)
 
@@ -50,12 +60,7 @@ sub σ (lam σ₁ t) = lam σ₁ (sub (exts σ) t)
 
 _[_] : ∀ {Γ A B} → Term (Γ ,ₓ B) A → Term Γ B
        → Term Γ A
-_[_] {Γ} {A} {B} N M = sub {(Γ ,ₓ B)} {Γ} σ {A} N
-    where
-    σ : ∀ {A} → Γ ,ₓ B ∋ A → Term Γ A
-    σ Z      =  M
-    σ (S x)  = Var x
-
+_[_] {Γ} {A} {B} N M = sub {(Γ ,ₓ B)} {Γ} (single M) {A} N
 
 {------------------------------------------------------------------------
 

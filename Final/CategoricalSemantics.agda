@@ -109,15 +109,36 @@ weakeningLemma {Γ} {Γ'} w (lam σ t₁) = proof
                   (curry ⟦ Γ ,ₓ σ ⊢ t₁ ⟧ₗ ∙ ⟦ w ⟧w)  
                 ∎
 
-_⊢s_ : (Δ Γ : Context) → Set
-_⊢s_ Δ Γ = (∀ {A} → Γ ∋ A → Term Δ A)
 
-weakσ : ∀ {Δ Γ A} → (σ : Δ ⊢s (Γ ,ₓ A)) → Δ ⊢s Γ
-weakσ σ x = σ (S x)
 
 ⟦_⟧s : {Δ Γ : Context} → (Δ ⊢s Γ) → Hom ⟦ Δ ⟧ₓ ⟦ Γ ⟧ₓ
 ⟦_⟧s {Δ} {∅} σ = t
 ⟦_⟧s {Δ} {Γ ,ₓ x} σ = ⟨ ⟦ weakσ σ ⟧s , ⟦ Δ ⊢ (σ Z) ⟧ₗ ⟩
+
+lemaweakσ : ∀ {Δ Γ A} → (σ : (Δ ⊢s (Γ ,ₓ A))) → ⟦ weakσ σ ⟧s ≅  π₁ ∙ ⟦ σ ⟧s 
+lemaweakσ σ = sym law1
+
+lemaSubstVar : (Γ : Context) → (⟦_⟧s {Γ} {Γ} (λ x → Var x))  ≅ iden { ⟦ Γ ⟧ₓ}
+lemaSubstVar ∅ = law
+lemaSubstVar (Γ ,ₓ x) = proof
+                 ⟦ Var ⟧s
+                ≅⟨ cong (λ x → ⟨ x , π₂ ⟩) (proof 
+                     ⟦ weakσ Var ⟧s
+                     ≅⟨ lemaweakσ Var ⟩
+                       π₁ ∙ ⟦ Var ⟧s                  
+                     ≅⟨ congr (lemaSubstVar (Γ ,ₓ _)) ⟩
+                       π₁ ∙ iden
+                     ≅⟨ idr ⟩
+                       π₁                  
+                    ∎) ⟩
+                  ⟨ π₁  , π₂ ⟩
+                ≅⟨ cong₂ ⟨_,_⟩ (sym idl) (sym idl) ⟩
+                  pair iden iden
+                ≅⟨ iden-pair ⟩
+                  iden
+                  ∎
+
+--trans (cong₂ ⟨_,_⟩ (trans (lemaweakσ Var) (trans (congr {! lemaSubstVar Γ !}) idr)) refl) (trans (cong₂ ⟨_,_⟩ (sym idl) (sym idl)) iden-pair)
 
 {-
     A partir de acá demostramos que nuestra interpretación preserva las siguientes
@@ -212,7 +233,7 @@ substitutionSemantics {Γ} {Δ} (p₂ t₁) σ =
   ≅⟨ refl ⟩
   ⟦ Γ ⊢ p₂ t₁ ⟧ₗ ∙ ⟦ σ ⟧s 
   ∎
-substitutionSemantics {Γ} {Δ} (lam σ₁ t₁) σ = 
+substitutionSemantics {Γ} {Δ} {A} (lam σ₁ t₁) σ = 
   proof 
     ⟦ Δ ⊢ sub σ (lam σ₁ t₁) ⟧ₗ
     ≅⟨ refl ⟩
@@ -220,7 +241,7 @@ substitutionSemantics {Γ} {Δ} (lam σ₁ t₁) σ =
     ≅⟨ refl ⟩
     curry ⟦ Δ ,ₓ σ₁ ⊢ (sub (exts σ) t₁) ⟧ₗ
     ≅⟨ cong curry (substitutionSemantics {Γ ,ₓ σ₁} {Δ ,ₓ σ₁} t₁ ((exts σ))) ⟩
-    curry (⟦ Γ ,ₓ σ₁ ⊢ t₁ ⟧ₗ ∙ ⟦ (exts σ) ⟧s)
+    curry (⟦ Γ ,ₓ σ₁ ⊢ t₁ ⟧ₗ ∙ ⟦ (exts {Γ} {Δ} σ {σ₁}) ⟧s)
     ≅⟨ cong curry (congr (cong₂ ⟨_,_⟩ {!   !} (sym idl))) ⟩
     curry (⟦ Γ ,ₓ σ₁ ⊢ t₁ ⟧ₗ ∙ pair ⟦ σ ⟧s iden)
     ≅⟨ sym curry-prop₁ ⟩
@@ -232,23 +253,28 @@ singleSubstitutionSemantics {Γ} {A} {A'} t t' =
     proof
     ⟦ Γ ⊢ t [ t' ] ⟧ₗ
     ≅⟨ cong (λ x → ⟦ Γ ⊢ x ⟧ₗ) aux ⟩
-    ⟦ Γ ⊢ sub σ t ⟧ₗ
-    ≅⟨ substitutionSemantics t σ ⟩
-    ⟦ Γ ,ₓ A ⊢ t ⟧ₗ ∙ ⟦ σ ⟧s
+    ⟦ Γ ⊢ sub (single t') t ⟧ₗ
+    ≅⟨ substitutionSemantics t (single t') ⟩
+    ⟦ Γ ,ₓ A ⊢ t ⟧ₗ ∙ ⟦ (single t') ⟧s
     ≅⟨ refl ⟩
-    ⟦ Γ ,ₓ A ⊢ t ⟧ₗ ∙ ⟨ ⟦ weakσ σ ⟧s , ⟦ Γ ⊢ (σ Z) ⟧ₗ ⟩
+    ⟦ Γ ,ₓ A ⊢ t ⟧ₗ ∙ ⟨ ⟦ weakσ (single t') ⟧s , ⟦ Γ ⊢ (single t' Z) ⟧ₗ ⟩
     ≅⟨ refl ⟩
-    ⟦ Γ ,ₓ A ⊢ t ⟧ₗ ∙ ⟨ ⟦ weakσ σ ⟧s , ⟦ Γ ⊢ t' ⟧ₗ ⟩
+    ⟦ Γ ,ₓ A ⊢ t ⟧ₗ ∙ ⟨ ⟦ weakσ (single t') ⟧s , ⟦ Γ ⊢ t' ⟧ₗ ⟩
     ≅⟨ congr (cong (λ x → ⟨ x , ⟦ Γ ⊢ t' ⟧ₗ ⟩) aux2) ⟩
     ⟦ Γ ,ₓ A ⊢ t ⟧ₗ ∙ ⟨ iden , ⟦ Γ ⊢ t' ⟧ₗ ⟩
     ∎
-    where σ : Γ ⊢s (Γ ,ₓ A)
-          σ Z = t'
-          σ (S x) = Var x -- TODO: mmm no estoy segura de que sea asi
-          aux :  t [ t' ] ≅ sub σ t
-          aux = {!   !}
-          aux2 : ⟦ weakσ σ ⟧s ≅ iden
-          aux2 = {!   !}
+    where -- TODO: mmm no estoy segura de que sea asi
+          aux :  t [ t' ] ≅ sub (single t') t
+          aux = refl
+          aux2 : ⟦ weakσ {Γ} { Γ} (single t') ⟧s  ≅ iden { ⟦ Γ ⟧ₓ}
+          aux2 = proof
+                 ⟦ weakσ (single t') ⟧s
+               ≅⟨ refl ⟩   
+                ⟦_⟧s {Γ} (λ x → Var x)
+               ≅⟨ lemaSubstVar Γ ⟩
+                 iden
+                 ∎  
+
 
 --open import Categories.Products.Properties hasProducts 
   --     using (comp-pair ; iden-pair ; iden-comp-pair ; fusion-pair ; fusion)
