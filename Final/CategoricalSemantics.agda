@@ -179,6 +179,24 @@ nose2 : ∀ {Γ Δ : Context} {A X : Ty} {x : Γ ∋ A } → (σ : Δ ⊢s (Γ ,
 nose2 {.(_ ,ₓ A)} {Δ} {A} {X} {Z} σ = law2
 nose2 {.(_ ,ₓ _)} {Δ} {A} {X} {S x} σ = trans ass (trans (congr law1) (trans (nose2 (weakσ σ)) refl))
 
+nose3 : ∀ {Γ Δ : Context} {σ : Δ ⊢s Γ} →  
+        ⟦ weakσ (exts σ) ⟧s ≅ ⟦ σ ⟧s ∙ π₁
+nose3 {Γ} {Δ} {σ} = 
+  proof
+  ⟦ weakσ (exts σ) ⟧s
+  ≅⟨ refl ⟩
+  ⟦ (λ x → weaken▹ (wπ▹ iden▹) (σ x)) ⟧s
+  ≅⟨ {!   !} ⟩
+  {!   !}
+  ≅⟨ {!   !} ⟩
+  ⟦ σ ⟧s ∙ π₁ 
+  ∎
+
+{-
+weakeningLemma : ∀{Γ Γ' τ} → (w : Γ' ▹ Γ) → (t : Term Γ τ) 
+               → ⟦ Γ' ⊢ weaken▹ w t ⟧ₗ ≅ ⟦ Γ ⊢ t ⟧ₗ ∙ ⟦ w ⟧w
+-}
+
 substitutionSemantics : ∀ {Γ Δ : Context} {A : Ty} → (t : Term Γ A) → (σ : Δ ⊢s Γ) →
            ⟦ Δ ⊢ sub σ t ⟧ₗ ≅ ⟦ Γ ⊢ t ⟧ₗ ∙ ⟦ σ ⟧s
 substitutionSemantics {Γ ,ₓ x₁} (Var Z) σ = sym law2
@@ -269,7 +287,7 @@ substitutionSemantics {Γ} {Δ} {A} (lam σ₁ t₁) σ =
     curry ⟦ Δ ,ₓ σ₁ ⊢ (sub (exts σ) t₁) ⟧ₗ
     ≅⟨ cong curry (substitutionSemantics {Γ ,ₓ σ₁} {Δ ,ₓ σ₁} t₁ ((exts σ))) ⟩
     curry (⟦ Γ ,ₓ σ₁ ⊢ t₁ ⟧ₗ ∙ ⟦ (exts {Γ} {Δ} σ {σ₁}) ⟧s)
-    ≅⟨ cong curry (congr (cong₂ ⟨_,_⟩ {!  !} (sym idl))) ⟩
+    ≅⟨ cong curry (congr (cong₂ ⟨_,_⟩ nose3 (sym idl))) ⟩
     curry (⟦ Γ ,ₓ σ₁ ⊢ t₁ ⟧ₗ ∙ pair ⟦ σ ⟧s iden)
     ≅⟨ sym curry-prop₁ ⟩
     (⟦ Γ ⊢ lam σ₁ t₁ ⟧ₗ ∙ ⟦ σ ⟧s) ∎
