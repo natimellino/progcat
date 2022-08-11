@@ -118,27 +118,48 @@ weakeningLemma {Γ} {Γ'} w (lam σ t₁) = proof
 lemaweakσ : ∀ {Δ Γ A} → (σ : (Δ ⊢s (Γ ,ₓ A))) → ⟦ weakσ σ ⟧s ≅  π₁ ∙ ⟦ σ ⟧s 
 lemaweakσ σ = sym law1
 
-lemaSubstVar : (Γ : Context) → (⟦_⟧s {Γ} {Γ} (λ x → Var x))  ≅ iden { ⟦ Γ ⟧ₓ}
-lemaSubstVar ∅ = law
-lemaSubstVar (Γ ,ₓ x) = proof
-                 ⟦ Var ⟧s
-                ≅⟨ cong (λ x → ⟨ x , π₂ ⟩) (proof 
-                     ⟦ weakσ Var ⟧s
-                     ≅⟨ lemaweakσ Var ⟩
-                       π₁ ∙ ⟦ Var ⟧s                  
-                     ≅⟨ congr (lemaSubstVar (Γ ,ₓ _)) ⟩
-                       π₁ ∙ iden
-                     ≅⟨ idr ⟩
-                       π₁                  
-                    ∎) ⟩
-                  ⟨ π₁  , π₂ ⟩
-                ≅⟨ cong₂ ⟨_,_⟩ (sym idl) (sym idl) ⟩
-                  pair iden iden
-                ≅⟨ iden-pair ⟩
-                  iden
-                  ∎
+-- Probemos con los renamings (si, ya sé).
+⟦_⊢_⟧ρ : ∀{Δ} → (Γ : Context) → (ρ : ∀ {A} → Γ ∋ A → Δ ∋ A) → Hom  ⟦ Δ ⟧ₓ ⟦ Γ ⟧ₓ
+⟦_⊢_⟧ρ ∅  ρ = t
+⟦_⊢_⟧ρ {Δ} (Γ ,ₓ x) ρ = ⟨ ⟦ Γ ⊢ (λ y → ρ (S y)) ⟧ρ , find Δ (ρ Z) ⟩
 
---trans (cong₂ ⟨_,_⟩ (trans (lemaweakσ Var) (trans (congr {! lemaSubstVar Γ !}) idr)) refl) (trans (cong₂ ⟨_,_⟩ (sym idl) (sym idl)) iden-pair)
+
+lrho : ∀{Γ Δ} → (ρ : ∀ {A} → Γ ∋ A → Δ ∋ A) → ⟦ (λ x → Var (ρ x)) ⟧s ≅ ⟦ Γ ⊢ ρ ⟧ρ  
+lrho {∅} ρ = refl
+lrho {Γ ,ₓ x} ρ = cong₂ ⟨_,_⟩ ((lrho (λ y → ρ (S y)))) refl
+
+lemarho : ∀{Δ B} →  (Γ : Context) → (ρ : ∀ {A} → Γ ∋ A → Δ ∋ A) → ⟦ Γ ⊢ (λ x → S_ {B = B} (ρ x)) ⟧ρ ≅ ⟦ Γ ⊢ ρ ⟧ρ ∙ π₁ {⟦ Δ ⟧ₓ} {⟦ B ⟧ₜ}
+lemarho ∅ ρ = law
+lemarho {Δ} (Γ ,ₓ x) ρ = proof
+                ⟦ Γ ,ₓ x ⊢ (λ x₁ → S ρ x₁) ⟧ρ
+              ≅⟨ refl ⟩
+                ⟨ ⟦ Γ ⊢ (λ y → S ρ (S y)) ⟧ρ , find Δ (ρ Z) ∙ π₁ ⟩
+              ≅⟨ cong₂ ⟨_,_⟩ (lemarho Γ ((λ y → ρ (S y)))) refl ⟩
+                ⟨ ⟦ Γ ⊢ (λ {A} z → ρ (S z)) ⟧ρ ∙ π₁ , find Δ (ρ Z) ∙ π₁ ⟩
+              ≅⟨ sym fusion ⟩
+                (⟨ ⟦ Γ ⊢ (λ {A} z → ρ (S z)) ⟧ρ , find Δ (ρ Z) ⟩) ∙ π₁
+              ≅⟨ refl ⟩
+                ⟦ Γ ,ₓ x ⊢ ρ ⟧ρ ∙ π₁
+              ∎
+
+idrho : ∀{Γ} → ⟦ Γ ⊢ id ⟧ρ ≅ iden { ⟦ Γ ⟧ₓ}
+idrho {∅} = law
+idrho {Γ ,ₓ x} = proof 
+           ⟦ Γ ,ₓ x ⊢ id ⟧ρ
+          ≅⟨ refl ⟩
+            ⟨ ⟦ Γ ⊢ S_ ⟧ρ , π₂ ⟩
+          ≅⟨ cong₂ ⟨_,_⟩ (lemarho Γ id) refl ⟩
+            ⟨ ⟦ Γ ⊢ id ⟧ρ ∙ π₁ , π₂ ⟩
+          ≅⟨ cong₂ ⟨_,_⟩ (congl (idrho {Γ})) refl ⟩
+             ⟨ iden ∙ π₁ , π₂ ⟩
+          ≅⟨ cong₂ ⟨_,_⟩ idl refl ⟩   
+            ⟨ π₁ , π₂ ⟩
+          ≅⟨ sym (law3 idr idr) ⟩
+            iden {⟦ Γ ,ₓ x ⟧ₓ}
+          ∎
+
+lemaSubstVar : (Γ : Context) → (⟦_⟧s {Γ} {Γ} (λ x → Var x))  ≅ iden { ⟦ Γ ⟧ₓ}
+lemaSubstVar Γ = trans (lrho {Γ} {Γ} id) (idrho {Γ})
 
 {-
     A partir de acá demostramos que nuestra interpretación preserva las siguientes
@@ -260,20 +281,12 @@ singleSubstitutionSemantics {Γ} {A} {A'} t t' =
     ⟦ Γ ,ₓ A ⊢ t ⟧ₗ ∙ ⟨ ⟦ weakσ (single t') ⟧s , ⟦ Γ ⊢ (single t' Z) ⟧ₗ ⟩
     ≅⟨ refl ⟩
     ⟦ Γ ,ₓ A ⊢ t ⟧ₗ ∙ ⟨ ⟦ weakσ (single t') ⟧s , ⟦ Γ ⊢ t' ⟧ₗ ⟩
-    ≅⟨ congr (cong (λ x → ⟨ x , ⟦ Γ ⊢ t' ⟧ₗ ⟩) aux2) ⟩
+    ≅⟨ congr (cong (λ x → ⟨ x , ⟦ Γ ⊢ t' ⟧ₗ ⟩) (lemaSubstVar Γ)) ⟩
     ⟦ Γ ,ₓ A ⊢ t ⟧ₗ ∙ ⟨ iden , ⟦ Γ ⊢ t' ⟧ₗ ⟩
     ∎
-    where -- TODO: mmm no estoy segura de que sea asi
+    where 
           aux :  t [ t' ] ≅ sub (single t') t
           aux = refl
-          aux2 : ⟦ weakσ {Γ} { Γ} (single t') ⟧s  ≅ iden { ⟦ Γ ⟧ₓ}
-          aux2 = proof
-                 ⟦ weakσ (single t') ⟧s
-               ≅⟨ refl ⟩   
-                ⟦_⟧s {Γ} (λ x → Var x)
-               ≅⟨ lemaSubstVar Γ ⟩
-                 iden
-                 ∎  
 
 
 --open import Categories.Products.Properties hasProducts 
