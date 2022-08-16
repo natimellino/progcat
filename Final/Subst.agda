@@ -40,25 +40,35 @@ sub σ (p₁ t) = p₁ (sub σ t)
 sub σ (p₂ t) = p₂ (sub σ t)
 sub σ (lam σ₁ t) = lam σ₁ (sub (exts σ) t)
 
+_⊢s_ : (Δ Γ : Context) → Set
+_⊢s_ Δ Γ = (∀ {A} → Γ ∋ A → Term Δ A)
+
+single : ∀{Γ A} → Term Γ A → Γ ⊢s (Γ ,ₓ A)
+single t Z = t
+single _ (S x) = Var x
+
 -- Definimos la substitución 'común' a partir de la substitución simultánea
 
 _[_] : ∀ {Γ A B} → Term (Γ ,ₓ B) A → Term Γ B
        → Term Γ A
-_[_] {Γ} {A} {B} N M = sub {(Γ ,ₓ B)} {Γ} σ {A} N
-    where
-    σ : ∀ {A} → Γ ,ₓ B ∋ A → Term Γ A
-    σ Z      =  M
-    σ (S x)  = Var x
+_[_] {Γ} {A} {B} N M = sub {(Γ ,ₓ B)} {Γ} (single M) {A} N
 
 -- Debilitación de contexto de tipado
 
+rho : ∀ {Γ A B} → Γ ∋ A → (Γ ,ₓ B) ∋ A
+rho x = S x
+
 weaken : ∀ {Γ A B} → Term Γ A 
            → Term (Γ ,ₓ B) A
-weaken {Γ} t = rename ρ t
-    where
-    ρ : ∀ {z B} → Γ ∋ z 
-        → (Γ ,ₓ B) ∋ z
-    ρ s = S s
+weaken {Γ} t = rename rho t
+--     where
+--     ρ : ∀ {z B} → Γ ∋ z 
+--         → (Γ ,ₓ B) ∋ z
+--     ρ s = S s
+
+
+weakσ : ∀ {Δ Γ A} → (σ : Δ ⊢s (Γ ,ₓ A)) → Δ ⊢s Γ
+weakσ σ x = σ (S x)
 
 {------------------------------------------------------------------------
 
