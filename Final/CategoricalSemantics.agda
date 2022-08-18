@@ -289,12 +289,50 @@ renamingVarLemma {Γ} {A} {B} {S x} {r} = renamingVarLemma
 
 renamingLemma : ∀ {Γ : Context} {A B : Ty} {t : Term Γ A} → {r : ∀ {Δ Δ' B} → Δ ∋ B → Δ' ∋ B} →
                 ⟦ Γ ,ₓ B ⊢ (rename r t) ⟧ₗ ≅ ⟦ Γ ⊢ t ⟧ₗ ∙ ⟦ Γ  ⊢ r ⟧ρ
-renamingLemma {Γ} {A} {B} {Var x} = renamingVarLemma
-renamingLemma {Γ} {A} {B} {t₁ ⊕ t₂} = {!   !}
-renamingLemma {Γ} {.(_ ⊗ _)} {B} {t₁ ×ₚ t₂} = {!   !}
-renamingLemma {Γ} {A} {B} {p₁ t₁} = {!   !}
-renamingLemma {Γ} {A} {B} {p₂ t₁} = {!   !}
-renamingLemma {Γ} {.(σ ⇛ _)} {B} {lam σ t₁} = {!   !}
+renamingLemma {Γ} {A} {B} {Var x} {r} = renamingVarLemma
+renamingLemma {Γ} {A} {B} {t₁ ⊕ t₂} {r} = 
+  proof 
+  ⟦ Γ ,ₓ B ⊢ rename r (t₁ ⊕ t₂) ⟧ₗ
+  ≅⟨ refl ⟩
+  apply ∙ ⟨ ⟦ Γ ,ₓ B ⊢ rename r t₁ ⟧ₗ , ⟦ Γ ,ₓ B ⊢ rename r t₂ ⟧ₗ ⟩
+  ≅⟨ congr (cong₂ ⟨_,_⟩ renamingLemma renamingLemma) ⟩
+  apply ∙ ⟨ ⟦ Γ ⊢ t₁ ⟧ₗ ∙ ⟦ Γ  ⊢ r ⟧ρ , ⟦ Γ ⊢ t₂ ⟧ₗ ∙ ⟦ Γ  ⊢ r ⟧ρ ⟩
+  ≅⟨ congr (sym fusion) ⟩
+  apply ∙ (⟨ ⟦ Γ ⊢ t₁ ⟧ₗ , ⟦ Γ ⊢ t₂ ⟧ₗ ⟩ ∙ ⟦ Γ ⊢ r ⟧ρ)
+  ≅⟨ sym ass ⟩
+  (apply ∙ ⟨ ⟦ Γ ⊢ t₁ ⟧ₗ , ⟦ Γ ⊢ t₂ ⟧ₗ ⟩) ∙ ⟦ Γ ⊢ r ⟧ρ
+  ≅⟨ refl ⟩
+  ⟦ Γ ⊢ t₁ ⊕ t₂ ⟧ₗ ∙ ⟦ Γ  ⊢ r ⟧ρ 
+  ∎
+renamingLemma {Γ} {.(_ ⊗ _)} {B} {t₁ ×ₚ t₂} {r} = 
+  proof 
+  ⟨ ⟦ Γ ,ₓ B ⊢ rename r t₁ ⟧ₗ , ⟦ Γ ,ₓ B ⊢ rename r t₂ ⟧ₗ ⟩
+  ≅⟨ cong₂ ⟨_,_⟩ renamingLemma renamingLemma ⟩
+  ⟨ ⟦ Γ ⊢ t₁ ⟧ₗ ∙ ⟦ Γ  ⊢ r ⟧ρ , ⟦ Γ ⊢ t₂ ⟧ₗ ∙ ⟦ Γ  ⊢ r ⟧ρ ⟩
+  ≅⟨ sym fusion ⟩ 
+  ⟨ ⟦ Γ ⊢ t₁ ⟧ₗ , ⟦ Γ ⊢ t₂ ⟧ₗ ⟩ ∙ ⟦ Γ  ⊢ r ⟧ρ
+  ∎ 
+renamingLemma {Γ} {A} {B} {p₁ t₁} = trans (congr (renamingLemma)) (sym ass)
+renamingLemma {Γ} {A} {B} {p₂ t₁} = trans (congr (renamingLemma)) (sym ass)
+renamingLemma {Γ} {.(σ ⇛ _)} {B} {lam σ t₁} {r} =
+  proof
+  ⟦ Γ ,ₓ B ⊢ rename r (lam σ t₁) ⟧ₗ
+  ≅⟨ refl ⟩
+  ⟦ Γ ,ₓ B  ⊢ lam σ (rename (extt r) t₁) ⟧ₗ
+  ≅⟨ refl ⟩
+  curry ⟦ Γ ,ₓ B ,ₓ σ ⊢  (rename (extt r) t₁) ⟧ₗ
+  ≅⟨ cong curry renamingLemma ⟩
+  curry (⟦ Γ ,ₓ σ ⊢ t₁ ⟧ₗ ∙ ⟦ Γ ,ₓ σ ⊢ extt r ⟧ρ)
+  ≅⟨ {!   !} ⟩
+  {!  !}
+  ≅⟨ {!   !} ⟩
+  {!   !}
+  ≅⟨ {!   !} ⟩
+  {!   !}
+  ≅⟨ {!   !} ⟩
+  {!   !}
+  ≅⟨ {!   !} ⟩
+  (⟦ Γ ⊢ lam σ t₁ ⟧ₗ ∙ ⟦ Γ ⊢ r ⟧ρ) ∎
 
 
 η-lema₁ : ∀ {Γ : Context} {A B : Ty} → {u : Term Γ B} →
@@ -331,4 +369,4 @@ renamingLemma {Γ} {.(σ ⇛ _)} {B} {lam σ t₁} = {!   !}
 -- soundness pr₂ = law2
 -- soundness pr₃ = sym (law3 refl refl)
 -- soundness β = β-proof
--- soundness η = η-proof
+-- soundness η = η-proof  
