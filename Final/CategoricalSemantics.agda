@@ -282,15 +282,20 @@ singleSubstitutionSemantics {Γ} {A} {A'} t t' =
       (find Γ x ∙ π₁) ∙ ⟨ ⟦ Γ ⊢ (λ {A = A₁} y → rho (S y)) ⟧ρ , π₂ ∙ π₁ ⟩
 -}
 
-renamingLemma : ∀ {Γ : Context} {A B : Ty} {t : Term Γ A} →
-                ⟦ Γ ,ₓ B ⊢ (rename rho t) ⟧ₗ ≅ ⟦ Γ ⊢ t ⟧ₗ ∙ ⟦ Γ  ⊢ rho ⟧ρ
-renamingLemma {.(_ ,ₓ Γ')} {Γ'} {A} {Var Z} = sym law2
-renamingLemma {.(_ ,ₓ _)} {Γ'} {A} {Var (S x)} = {!   !}
-renamingLemma {Γ} {Γ'} {A} {t₁ ⊕ t₂} = {!   !}
-renamingLemma {Γ} {.(_ ⊗ _)} {A} {t₁ ×ₚ t₂} = {!   !}
-renamingLemma {Γ} {Γ'} {A} {p₁ t₁} = {!   !}
-renamingLemma {Γ} {Γ'} {A} {p₂ t₁} = {!   !}
-renamingLemma {Γ} {.(σ ⇛ _)} {A} {lam σ t₁} = {!   !}
+renamingVarLemma : ∀ {Γ : Context} {A B : Ty} {x : Γ ∋ A} → {r : ∀ {Δ Δ' B} → Δ ∋ B → Δ' ∋ B} →
+                   find (Γ ,ₓ B) (r x) ≅ find Γ x ∙ ⟦ Γ ⊢ r ⟧ρ
+renamingVarLemma {Γ} {A} {B} {Z} {r} = sym law2
+renamingVarLemma {Γ} {A} {B} {S x} {r} = renamingVarLemma
+
+renamingLemma : ∀ {Γ : Context} {A B : Ty} {t : Term Γ A} → {r : ∀ {Δ Δ' B} → Δ ∋ B → Δ' ∋ B} →
+                ⟦ Γ ,ₓ B ⊢ (rename r t) ⟧ₗ ≅ ⟦ Γ ⊢ t ⟧ₗ ∙ ⟦ Γ  ⊢ r ⟧ρ
+renamingLemma {Γ} {A} {B} {Var x} = renamingVarLemma
+renamingLemma {Γ} {A} {B} {t₁ ⊕ t₂} = {!   !}
+renamingLemma {Γ} {.(_ ⊗ _)} {B} {t₁ ×ₚ t₂} = {!   !}
+renamingLemma {Γ} {A} {B} {p₁ t₁} = {!   !}
+renamingLemma {Γ} {A} {B} {p₂ t₁} = {!   !}
+renamingLemma {Γ} {.(σ ⇛ _)} {B} {lam σ t₁} = {!   !}
+
 
 η-lema₁ : ∀ {Γ : Context} {A B : Ty} → {u : Term Γ B} →
             ⟦ Γ ,ₓ A ⊢ weaken u ⟧ₗ ≅ ⟦ Γ ⊢ u ⟧ₗ ∙ π₁
