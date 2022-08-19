@@ -218,7 +218,8 @@ lemarho : ∀{Δ B} →  (Γ : Context) → (ρ : ∀ {A} → Γ ∋ A → Δ �
 
 lemaRenamingSubst :  ∀ {Γ Δ Δ' : Context} → (ρ : ∀ {A} → Γ ∋ A → Δ ∋ A) →  (σ : Γ ⊢s Δ')
                   → ⟦ (λ x₁ → rename ρ (σ x₁)) ⟧s ≅ ⟦ (λ x₁ → σ x₁) ⟧s ∙ ⟦ Γ ⊢ ρ ⟧ρ
-lemaRenamingSubst {Γ} ρ σ = {!   !}
+lemaRenamingSubst {Γ} {Δ} {∅} ρ σ = law
+lemaRenamingSubst {Γ} {Δ} {Δ' ,ₓ x} ρ σ = trans (cong₂ ⟨_,_⟩ (lemaRenamingSubst ρ (λ x → σ (S x))) (renamingLemma (σ Z) ρ)) (sym fusion)
 
 weakSubsLema : ∀ {Γ Δ : Context}{B} (σ : Δ ⊢s Γ) →  
                ⟦ weakσ {Δ ,ₓ B }{Γ}{B} (exts σ {B}) ⟧s ≅ ⟦ σ ⟧s ∙ π₁ {_} {⟦ B ⟧ₜ}
