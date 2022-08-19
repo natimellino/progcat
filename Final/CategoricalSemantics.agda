@@ -189,9 +189,9 @@ renamingLemma {Γ} {Δ} {.(σ ⇛ _)} (lam σ t₁) r = proof
     ⟦ Γ ⊢ u ⟧ₗ 
     ∎
 
-η-proof : ∀ {Γ : Context} {A B : Ty} → {u : Term Γ (A ⇛ B)} → 
+η-proof : ∀ {Γ : Context} {A B : Ty} → (u : Term Γ (A ⇛ B)) → 
         curry (apply ∙ ⟨ ⟦ Γ ,ₓ A ⊢ weaken u ⟧ₗ , π₂ ⟩) ≅ ⟦ Γ ⊢ u ⟧ₗ
-η-proof {Γ} {A} {B} {u} = proof 
+η-proof {Γ} {A} {B} u = proof 
     curry (apply ∙ ⟨ ⟦ Γ ,ₓ A ⊢ weaken u ⟧ₗ , π₂ ⟩) 
     ≅⟨ cong (λ x → curry (apply ∙ ⟨ x , π₂ ⟩)) (η-lema₁ u) ⟩ 
     curry (apply ∙ ⟨ ⟦ Γ ⊢ u ⟧ₗ ∙ π₁ , π₂ ⟩) 
@@ -307,11 +307,10 @@ singleSubstitutionSemantics {Γ} {A} {A'} t t' =
 
 -- Finalmente demostramos Soundness
 
-{-
-soundness : ∀ {τ} → {Γ : Context} → (t : Term Γ τ) → (u : Term Γ τ) →
-soundness t u pr₁ = law1
+soundness : ∀ {τ} → {Γ : Context} → {t : Term Γ τ} → {u : Term Γ τ} →
+            (t ≡ₜ u) → (⟦ Γ ⊢ t ⟧ₗ) ≅ (⟦ Γ ⊢ u ⟧ₗ)
+soundness pr₁ = law1
 soundness pr₂ = law2
 soundness pr₃ = sym (law3 refl refl)
-soundness {t = t} {u} β = {! β-proof    !}  -- β-proof {_} {_} {_} {_}
-soundness η = {!   !}  --η-proof  
--}
+soundness (η f) = η-proof f
+soundness (β e x) = β-proof e x
