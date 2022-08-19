@@ -202,27 +202,17 @@ renamingLemma {Γ} {Δ} {.(σ ⇛ _)} (lam σ t₁) r = proof
     ∎
 
 
-lemaSubstVar : (Γ : Context) → (⟦_⟧s {Γ} {Γ} (λ x → Var x))  ≅ iden { ⟦ Γ ⟧ₓ}
-lemaSubstVar Γ = trans (lrho {Γ} {Γ} id) (idrho {Γ})
+lemaSubstVar : (Γ : Context) → (⟦_⟧s {Γ} {Γ} Var)  ≅ iden { ⟦ Γ ⟧ₓ}
+lemaSubstVar Γ = trans (lrho {Γ} id) (idrho {Γ})
 
-{-
-varWeakLema : ∀ {Γ Δ : Context} {A X : Ty} {x : Γ ∋ A } → (σ : Δ ⊢s (Γ ,ₓ X)) →
-        ⟦ Γ ⊢ Var x ⟧ₗ ∙ ⟦ weakσ σ ⟧s ≅  ⟦ Δ ⊢ σ (S x) ⟧ₗ
-varWeakLema {.(_ ,ₓ A)} {Δ} {A} {X} {Z} σ = law2
-varWeakLema {.(_ ,ₓ _)} {Δ} {A} {X} {S x} σ = trans ass (trans (congr law1) (trans (varWeakLema (weakσ σ)) refl))
--}
-{-
-lemarho : ∀{Δ B} →  (Γ : Context) → (ρ : ∀ {A} → Γ ∋ A → Δ ∋ A) → 
-          ⟦ Γ ⊢ (λ x → S_ {B = B} (ρ x)) ⟧ρ ≅ ⟦ Γ ⊢ ρ ⟧ρ ∙ π₁ {⟦ Δ ⟧ₓ} {⟦ B ⟧ₜ}
--}
 
-lemaRenamingSubst :  ∀ {Γ Δ Δ' : Context} → (ρ : ∀ {A} → Γ ∋ A → Δ ∋ A) →  (σ : Γ ⊢s Δ')
-                  → ⟦ (λ x₁ → rename ρ (σ x₁)) ⟧s ≅ ⟦ (λ x₁ → σ x₁) ⟧s ∙ ⟦ Γ ⊢ ρ ⟧ρ
-lemaRenamingSubst {Γ} {Δ} {∅} ρ σ = law
-lemaRenamingSubst {Γ} {Δ} {Δ' ,ₓ x} ρ σ = trans (cong₂ ⟨_,_⟩ (lemaRenamingSubst ρ (λ x → σ (S x))) (renamingLemma (σ Z) ρ)) (sym fusion)
+lemaRenamingSubst :  ∀ {Δ' Γ Δ : Context} → (ρ : ∀ {A} → Γ ∋ A → Δ ∋ A) →  (σ : Γ ⊢s Δ')
+                  → ⟦ (λ x₁ → rename ρ (σ x₁)) ⟧s ≅ ⟦ σ ⟧s ∙ ⟦ Γ ⊢ ρ ⟧ρ
+lemaRenamingSubst {∅} ρ σ = law
+lemaRenamingSubst {Δ' ,ₓ x} ρ σ = trans (cong₂ ⟨_,_⟩ (lemaRenamingSubst ρ (λ x → σ (S x))) (renamingLemma (σ Z) ρ)) (sym fusion)
 
 weakSubsLema : ∀ {Γ Δ : Context}{B} (σ : Δ ⊢s Γ) →  
-               ⟦ weakσ {Δ ,ₓ B }{Γ}{B} (exts σ {B}) ⟧s ≅ ⟦ σ ⟧s ∙ π₁ {_} {⟦ B ⟧ₜ}
+               ⟦ weakσ (exts σ {B}) ⟧s ≅ ⟦ σ ⟧s ∙ π₁ {_} {⟦ B ⟧ₜ}
 weakSubsLema {∅} {Δ} {B} σ = law
 weakSubsLema {Γ ,ₓ x} {Δ} {B} σ = proof
                         (⟨ ⟦ weakσ (weakσ (exts σ)) ⟧s , ⟦ Δ ,ₓ B ⊢ weakσ (exts σ) Z ⟧ₗ ⟩)
@@ -265,7 +255,7 @@ singleSubstitutionSemantics : ∀ {Γ : Context} {A A' : Ty} → (t : Term (Γ ,
 singleSubstitutionSemantics {Γ} {A} {A'} t t' = 
     proof
     ⟦ Γ ⊢ t [ t' ] ⟧ₗ
-    ≅⟨ cong (λ x → ⟦ Γ ⊢ x ⟧ₗ) aux ⟩
+    ≅⟨ refl ⟩
     ⟦ Γ ⊢ sub (single t') t ⟧ₗ
     ≅⟨ substitutionSemantics t (single t') ⟩
     ⟦ Γ ,ₓ A ⊢ t ⟧ₗ ∙ ⟦ (single t') ⟧s
@@ -276,9 +266,6 @@ singleSubstitutionSemantics {Γ} {A} {A'} t t' =
     ≅⟨ congr (cong (λ x → ⟨ x , ⟦ Γ ⊢ t' ⟧ₗ ⟩) (lemaSubstVar Γ)) ⟩
     ⟦ Γ ,ₓ A ⊢ t ⟧ₗ ∙ ⟨ iden , ⟦ Γ ⊢ t' ⟧ₗ ⟩
     ∎
-    where 
-          aux :  t [ t' ] ≅ sub (single t') t
-          aux = refl
 
 {-------}
 
@@ -295,14 +282,6 @@ singleSubstitutionSemantics {Γ} {A} {A'} t t' =
     ≅⟨ sym (singleSubstitutionSemantics e x) ⟩ -- usar la demostracion de la igualdad de la substitucion
     ⟦ Γ ⊢ e [ x ] ⟧ₗ 
     ∎
-
-
-{-
-
-(find Γ x ∙ π₁) ∙ π₁ ≅
-      (find Γ x ∙ π₁) ∙ ⟨ ⟦ Γ ⊢ (λ {A = A₁} y → rho (S y)) ⟧ρ , π₂ ∙ π₁ ⟩
--}
-
 
 
 -- Finalmente demostramos Soundness
