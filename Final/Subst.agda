@@ -21,17 +21,19 @@ rename ρ (p₁ t) = p₁ (rename ρ t)
 rename ρ (p₂ t) = p₂ (rename ρ t)
 rename ρ (lam σ t) = lam σ (rename (extt ρ) t)
 
--- Lo mismo que extt pero para términos
+-- Lo mismo que extt pero para substituciones
+_⊢s_ : (Δ Γ : Context) → Set
+_⊢s_ Δ Γ = (∀ {A} → Γ ∋ A → Term Δ A)
 
 exts : ∀ {Γ Δ}
-       → (∀ {A} →       Γ ∋ A →     Term Δ A)
-       → (∀ {A B} → Γ ,ₓ B ∋ A → Term (Δ ,ₓ B) A)
+       → (Δ ⊢s Γ)   
+       → (∀ {B} → (Δ ,ₓ B) ⊢s (Γ ,ₓ B)) 
 exts σ Z      =  Var Z
 exts σ (S x)  =  rename S_ (σ x)
 
 -- Substitución simultánea dada una función de mapeo (multiple substitution)
 
-sub : ∀ {Γ Δ} → (∀ {A} → Γ ∋ A → Term Δ A)
+sub : ∀ {Γ Δ} → (Δ ⊢s Γ)
       → (∀ {A} → Term Γ A → Term Δ A)
 sub σ (Var x) = σ x
 sub σ (t ⊕ t₁) = sub σ t ⊕ sub σ t₁
@@ -39,9 +41,6 @@ sub σ (t ×ₚ t₁) = sub σ t ×ₚ sub σ t₁
 sub σ (p₁ t) = p₁ (sub σ t)
 sub σ (p₂ t) = p₂ (sub σ t)
 sub σ (lam σ₁ t) = lam σ₁ (sub (exts σ) t)
-
-_⊢s_ : (Δ Γ : Context) → Set
-_⊢s_ Δ Γ = (∀ {A} → Γ ∋ A → Term Δ A)
 
 single : ∀{Γ A} → Term Γ A → Γ ⊢s (Γ ,ₓ A)
 single t Z = t
@@ -55,17 +54,9 @@ _[_] {Γ} {A} {B} N M = sub {(Γ ,ₓ B)} {Γ} (single M) {A} N
 
 -- Debilitación de contexto de tipado
 
-rho : ∀ {Γ A B} → Γ ∋ A → (Γ ,ₓ B) ∋ A
-rho x = S x
-
 weaken : ∀ {Γ A B} → Term Γ A 
            → Term (Γ ,ₓ B) A
-weaken {Γ} t = rename rho t
---     where
---     ρ : ∀ {z B} → Γ ∋ z 
---         → (Γ ,ₓ B) ∋ z
---     ρ s = S s
-
+weaken {Γ} t = rename S_ t
 
 weakσ : ∀ {Δ Γ A} → (σ : Δ ⊢s (Γ ,ₓ A)) → Δ ⊢s Γ
 weakσ σ x = σ (S x)
