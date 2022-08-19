@@ -82,8 +82,8 @@ data _≡ₜ_ : ∀ {Γ : Context} {T : Ty} → Term Γ T → Term Γ T → Set 
 
     -- Eta y Beta
 
-    η : ∀ {Γ : Context} {A B : Ty} → {f : Term Γ (A ⇛ B)} →
+    η : ∀ {Γ : Context} {A B : Ty} → (f : Term Γ (A ⇛ B)) →
         (lam A ((weaken f) ⊕ (Var Z))) ≡ₜ f
 
-    β : ∀ {Γ : Context} {A B : Ty} → {e : Term (Γ ,ₓ A) B} → {x : Term Γ A} →
+    β : ∀ {Γ : Context} {A B : Ty} → (e : Term (Γ ,ₓ A) B) → (x : Term Γ A) →
         ((lam A e) ⊕ x) ≡ₜ (e [ x ])
