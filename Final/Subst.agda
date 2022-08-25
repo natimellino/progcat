@@ -9,7 +9,7 @@ extt : ∀ {Γ} {Δ} → (∀ {A} → Γ ∋ A → Δ ∋ A)
 extt ρ Z      =  Z
 extt ρ (S x)  =  S (ρ x)
 
--- Nos permite llevar términos de un contexto a otro
+-- Renaming de variables: nos permite llevar términos de un contexto a otro
 
 rename : ∀ {Γ Δ}
          → (∀ {A} → Γ ∋ A → Δ ∋ A)
@@ -42,6 +42,8 @@ sub σ (p₁ t) = p₁ (sub σ t)
 sub σ (p₂ t) = p₂ (sub σ t)
 sub σ (lam σ₁ t) = lam σ₁ (sub (exts σ) t)
 
+-- Función de mapeo para definir la substitución simple
+
 single : ∀{Γ A} → Term Γ A → Γ ⊢s (Γ ,ₓ A)
 single t Z = t
 single _ (S x) = Var x
@@ -57,6 +59,8 @@ _[_] {Γ} {A} {B} N M = sub {(Γ ,ₓ B)} {Γ} (single M) {A} N
 weaken : ∀ {Γ A B} → Term Γ A 
            → Term (Γ ,ₓ B) A
 weaken {Γ} t = rename S_ t
+
+-- Debilitación de contexto para una función de mapeo
 
 weakσ : ∀ {Δ Γ A} → (σ : Δ ⊢s (Γ ,ₓ A)) → Δ ⊢s Γ
 weakσ σ x = σ (S x)

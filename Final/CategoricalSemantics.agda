@@ -20,21 +20,9 @@ open Products hasProducts
 open Terminal hasTerminal
 open CCC isCCC
 
-curry-prop₁ : ∀{X X' Y Z} → {g : Hom X' X}{f : Hom (X × Y) Z} →
-              curry f ∙ g ≅ curry (f ∙ pair g iden)
-curry-prop₁ {g = g} {f} = proof 
-                              curry f ∙ g
-                            ≅⟨ sym idl ⟩
-                              iden ∙ curry f ∙ g
-                            ≅⟨ congl (sym lawcurry2) ⟩
-                              curry (uncurry iden) ∙  curry f ∙ g
-                            ≅⟨ cong (λ x → curry x ∙ curry f ∙ g) (sym idl) ⟩
-                              curry (iden ∙ uncurry iden) ∙  curry f ∙ g
-                            ≅⟨ nat-curry ⟩
-                              curry (iden ∙ f ∙ pair g iden)
-                            ≅⟨ cong (λ x → curry x) idl ⟩
-                              curry (f ∙ pair g iden) 
-                            ∎
+
+{- Interpretaciones como flechas y objetos CCC -}
+
 
 -- Interpretación para tipos como objetos CCC  
 ⟦_⟧ₜ : Ty → Obj
@@ -69,11 +57,14 @@ find (Γ ,ₓ x) (S v) = (find Γ v) ∙ π₁
 ⟦_⟧s {Δ} {Γ ,ₓ x} σ = ⟨ ⟦ weakσ σ ⟧s , ⟦ Δ ⊢ (σ Z) ⟧ₗ ⟩
 
 -- Interpretación para renamings como flechas CCC
+
 ⟦_⊢_⟧ρ : ∀{Δ} → (Γ : Context) → (ρ : ∀ {A} → Γ ∋ A → Δ ∋ A) → Hom  ⟦ Δ ⟧ₓ ⟦ Γ ⟧ₓ
 ⟦_⊢_⟧ρ ∅  ρ = t
 ⟦_⊢_⟧ρ {Δ} (Γ ,ₓ x) ρ = ⟨ ⟦ Γ ⊢ (λ y → ρ (S y)) ⟧ρ , find Δ (ρ Z) ⟩
 
-{-
+{- / Interpretaciones como flechas y objetos CCC -}
+
+{---------------------------------------------------------------------------------
     A partir de acá demostramos que nuestra interpretación preserva las siguientes
     ecuaciones del lambda calculo formalizadas más arriba:
 
@@ -83,7 +74,32 @@ find (Γ ,ₓ x) (S v) = (find Γ v) ∙ π₁
     4) (λx . b) a        = b[a/x]
     5) (λx . c x)        = c (x no ocurre en c)
 
+---------------------------------------------------------------------------------}
+
+{-
+
+Comenzamos con las pruebas para la regla η
+
 -}
+
+
+{- Demostraciones auxiliares -}
+
+curry-prop₁ : ∀{X X' Y Z} → {g : Hom X' X}{f : Hom (X × Y) Z} →
+              curry f ∙ g ≅ curry (f ∙ pair g iden)
+curry-prop₁ {g = g} {f} = proof 
+                              curry f ∙ g
+                            ≅⟨ sym idl ⟩
+                              iden ∙ curry f ∙ g
+                            ≅⟨ congl (sym lawcurry2) ⟩
+                              curry (uncurry iden) ∙  curry f ∙ g
+                            ≅⟨ cong (λ x → curry x ∙ curry f ∙ g) (sym idl) ⟩
+                              curry (iden ∙ uncurry iden) ∙  curry f ∙ g
+                            ≅⟨ nat-curry ⟩
+                              curry (iden ∙ f ∙ pair g iden)
+                            ≅⟨ cong (λ x → curry x) idl ⟩
+                              curry (f ∙ pair g iden) 
+                            ∎
 
 lrho : ∀{Γ Δ} → (ρ : ∀ {A} → Γ ∋ A → Δ ∋ A) → ⟦ (λ x → Var (ρ x)) ⟧s ≅ ⟦ Γ ⊢ ρ ⟧ρ  
 lrho {∅} ρ = refl
@@ -131,13 +147,27 @@ renamingVarLemma {Γ} {Δ} {A} {S x} r = trans (trans (renamingVarLemma (λ y �
 renamingLemma : ∀ {Γ Δ : Context}{A} → (t : Term Γ A) → (r : ∀ {B} → Γ ∋ B → Δ ∋ B) →
                 ⟦ Δ ⊢ (rename r t) ⟧ₗ ≅ ⟦ Γ ⊢ t ⟧ₗ ∙ ⟦ Γ  ⊢ r ⟧ρ
 renamingLemma {Γ} {Δ} {A} (Var x) r = renamingVarLemma r
-renamingLemma {Γ} {Δ} {A} (t₁ ⊕ t₂) r = trans (congr (proof
-                    ⟨ ⟦ Δ ⊢ rename r t₁ ⟧ₗ , ⟦ Δ ⊢ rename r t₂ ⟧ₗ ⟩
-                   ≅⟨ cong₂ ⟨_,_⟩ (renamingLemma t₁ r) (renamingLemma t₂ r) ⟩
-                    ⟨ ⟦ Γ ⊢ t₁ ⟧ₗ ∙ ⟦ Γ ⊢ r ⟧ρ , ⟦ Γ ⊢ t₂ ⟧ₗ ∙ ⟦ Γ ⊢ r ⟧ρ ⟩
-                   ≅⟨ sym fusion ⟩
-                    ⟨ ⟦ Γ ⊢ t₁ ⟧ₗ , ⟦ Γ ⊢ t₂ ⟧ₗ ⟩ ∙ ⟦ Γ ⊢ r ⟧ρ
-                   ∎)) (sym ass)
+renamingLemma {Γ} {Δ} {A} (t₁ ⊕ t₂) r = 
+  proof
+  ⟦ Δ ⊢ rename r (t₁ ⊕ t₂) ⟧ₗ
+  ≅⟨ refl ⟩
+  ⟦ Δ ⊢ rename r t₁ ⊕ rename r t₂ ⟧ₗ
+  ≅⟨ refl ⟩
+  apply ∙ ⟨ ⟦ Δ ⊢ rename r t₁ ⟧ₗ , ⟦ Δ ⊢ rename r t₂ ⟧ₗ ⟩
+  ≅⟨ congr ( proof
+             ⟨ ⟦ Δ ⊢ rename r t₁ ⟧ₗ , ⟦ Δ ⊢ rename r t₂ ⟧ₗ ⟩
+             ≅⟨ cong₂ ⟨_,_⟩ (renamingLemma t₁ r) (renamingLemma t₂ r) ⟩
+             ⟨ ⟦ Γ ⊢ t₁ ⟧ₗ ∙ ⟦ Γ ⊢ r ⟧ρ , ⟦ Γ ⊢ t₂ ⟧ₗ ∙ ⟦ Γ ⊢ r ⟧ρ ⟩
+             ≅⟨ sym fusion ⟩
+             ⟨ ⟦ Γ ⊢ t₁ ⟧ₗ , ⟦ Γ ⊢ t₂ ⟧ₗ ⟩ ∙ ⟦ Γ ⊢ r ⟧ρ
+             ∎
+     )⟩
+  apply ∙ (⟨ ⟦ Γ ⊢ t₁ ⟧ₗ , ⟦ Γ ⊢ t₂ ⟧ₗ ⟩ ∙ ⟦ Γ ⊢ r ⟧ρ)
+  ≅⟨ sym ass ⟩
+  (apply ∙ ⟨ ⟦ Γ ⊢ t₁ ⟧ₗ , ⟦ Γ ⊢ t₂ ⟧ₗ ⟩) ∙ ⟦ Γ ⊢ r ⟧ρ
+  ≅⟨ refl ⟩
+  ⟦ Γ ⊢ t₁ ⊕ t₂ ⟧ₗ ∙ ⟦ Γ ⊢ r ⟧ρ 
+  ∎
 renamingLemma {Γ} {Δ} {.(_ ⊗ _)} (t₁ ×ₚ t₂) r = proof
                    ⟦ Δ ⊢ rename r (t₁ ×ₚ t₂) ⟧ₗ
                  ≅⟨ cong₂ ⟨_,_⟩ (renamingLemma t₁ r) (renamingLemma t₂ r) ⟩
@@ -169,6 +199,10 @@ renamingLemma {Γ} {Δ} {.(σ ⇛ _)} (lam σ t₁) r = proof
                                ⟦ Γ ⊢ lam σ t₁ ⟧ₗ ∙ ⟦ Γ ⊢ r ⟧ρ
                           ∎                            
 
+{- / Demostraciones auxiliares -}
+
+{- Lemas auxiliares -}
+
 η-lema₁ : ∀ {Γ : Context} {A B : Ty} → (u : Term Γ B) →
             ⟦ Γ ,ₓ A ⊢ weaken u ⟧ₗ ≅ ⟦ Γ ⊢ u ⟧ₗ ∙ π₁ {_} {⟦ A ⟧ₜ}
 η-lema₁ {Γ} {A} {B} u = proof
@@ -189,6 +223,12 @@ renamingLemma {Γ} {Δ} {.(σ ⇛ _)} (lam σ t₁) r = proof
     ⟦ Γ ⊢ u ⟧ₗ 
     ∎
 
+{- / Lemas auxiliares -}
+
+{-
+  Prueba para la regla η
+-}
+
 η-proof : ∀ {Γ : Context} {A B : Ty} → (u : Term Γ (A ⇛ B)) → 
         curry (apply ∙ ⟨ ⟦ Γ ,ₓ A ⊢ weaken u ⟧ₗ , π₂ ⟩) ≅ ⟦ Γ ⊢ u ⟧ₗ
 η-proof {Γ} {A} {B} u = proof 
@@ -201,6 +241,15 @@ renamingLemma {Γ} {Δ} {.(σ ⇛ _)} (lam σ t₁) r = proof
     ⟦ Γ ⊢ u ⟧ₗ 
     ∎
 
+{------------------------------------------------------------------------------------------------------------------------------------
+
+Demostraciones para la regla β
+
+-------------------------------------------------------------------------------------------------------------------------------------}
+
+
+{- Demostraciones auxiliares -}
+
 
 lemaSubstVar : (Γ : Context) → (⟦_⟧s {Γ} {Γ} Var)  ≅ iden { ⟦ Γ ⟧ₓ}
 lemaSubstVar Γ = trans (lrho {Γ} id) (idrho {Γ})
@@ -209,29 +258,45 @@ lemaSubstVar Γ = trans (lrho {Γ} id) (idrho {Γ})
 lemaRenamingSubst :  ∀ {Δ' Γ Δ : Context} → (ρ : ∀ {A} → Γ ∋ A → Δ ∋ A) →  (σ : Γ ⊢s Δ')
                   → ⟦ (λ x₁ → rename ρ (σ x₁)) ⟧s ≅ ⟦ σ ⟧s ∙ ⟦ Γ ⊢ ρ ⟧ρ
 lemaRenamingSubst {∅} ρ σ = law
-lemaRenamingSubst {Δ' ,ₓ x} ρ σ = trans (cong₂ ⟨_,_⟩ (lemaRenamingSubst ρ (λ x → σ (S x))) (renamingLemma (σ Z) ρ)) (sym fusion)
+lemaRenamingSubst {Δ' ,ₓ x} {Γ} {Δ} ρ σ = 
+  proof
+  ⟦ (λ x₁ → rename ρ (σ x₁)) ⟧s
+  ≅⟨ refl ⟩
+  ⟨ ⟦ weakσ (λ x₁ → rename ρ (σ x₁)) ⟧s , ⟦ Δ ⊢ ((λ x₁ → rename ρ (σ x₁)) Z) ⟧ₗ ⟩
+  ≅⟨ cong₂ ⟨_,_⟩ (lemaRenamingSubst ρ (λ x → σ (S x))) (renamingLemma (σ Z) ρ) ⟩
+  ⟨ ⟦ (λ x₁ → σ (S x₁)) ⟧s ∙ ⟦ Γ ⊢ ρ ⟧ρ , ⟦ Γ ⊢ σ Z ⟧ₗ ∙ ⟦ Γ ⊢ ρ ⟧ρ ⟩
+  ≅⟨ sym fusion ⟩
+  ⟦ σ ⟧s ∙ ⟦ Γ ⊢ ρ ⟧ρ 
+  ∎
 
 weakSubsLema : ∀ {Γ Δ : Context}{B} (σ : Δ ⊢s Γ) →  
                ⟦ weakσ (exts σ {B}) ⟧s ≅ ⟦ σ ⟧s ∙ π₁ {_} {⟦ B ⟧ₜ}
 weakSubsLema {∅} {Δ} {B} σ = law
-weakSubsLema {Γ ,ₓ x} {Δ} {B} σ = proof
-                        (⟨ ⟦ weakσ (weakσ (exts σ)) ⟧s , ⟦ Δ ,ₓ B ⊢ weakσ (exts σ) Z ⟧ₗ ⟩)
-                       ≅⟨ refl ⟩
-                        (⟨ ⟦ (λ x₁ → rename S_ (σ (S x₁))) ⟧s , ⟦ Δ ,ₓ B ⊢ rename S_ (σ Z) ⟧ₗ ⟩)
-                       ≅⟨ cong₂ ⟨_,_⟩ (lemaRenamingSubst S_ (λ x → σ (S x))) (renamingLemma (σ Z) S_) ⟩
-                         ⟨ ⟦ (λ x₁ → σ (S x₁)) ⟧s ∙ ⟦ Δ ⊢ S_ ⟧ρ , ⟦ Δ ⊢ σ Z ⟧ₗ ∙ ⟦ Δ ⊢ S_ {_} {_} {B} ⟧ρ ⟩
-                      ≅⟨ cong₂ ⟨_,_⟩ (congr (lemaρS {Δ})) (congr (lemaρS {Δ})) ⟩
-                        ⟨ ⟦ weakσ σ ⟧s ∙ π₁ , ⟦ Δ ⊢ σ Z ⟧ₗ ∙ π₁ ⟩
-                      ≅⟨ sym fusion ⟩
-                        ⟦ σ ⟧s ∙ π₁
-                      ∎
+weakSubsLema {Γ ,ₓ x} {Δ} {B} σ = 
+  proof
+  (⟨ ⟦ weakσ (weakσ (exts σ)) ⟧s , ⟦ Δ ,ₓ B ⊢ weakσ (exts σ) Z ⟧ₗ ⟩)
+  ≅⟨ refl ⟩
+  (⟨ ⟦ (λ x₁ → rename S_ (σ (S x₁))) ⟧s , ⟦ Δ ,ₓ B ⊢ rename S_ (σ Z) ⟧ₗ ⟩)
+  ≅⟨ cong₂ ⟨_,_⟩ (lemaRenamingSubst S_ (λ x → σ (S x))) (renamingLemma (σ Z) S_) ⟩
+    ⟨ ⟦ (λ x₁ → σ (S x₁)) ⟧s ∙ ⟦ Δ ⊢ S_ ⟧ρ , ⟦ Δ ⊢ σ Z ⟧ₗ ∙ ⟦ Δ ⊢ S_ {_} {_} {B} ⟧ρ ⟩
+  ≅⟨ cong₂ ⟨_,_⟩ (congr (lemaρS {Δ})) (congr (lemaρS {Δ})) ⟩
+    ⟨ ⟦ weakσ σ ⟧s ∙ π₁ , ⟦ Δ ⊢ σ Z ⟧ₗ ∙ π₁ ⟩
+  ≅⟨ sym fusion ⟩
+    ⟦ σ ⟧s ∙ π₁
+  ∎
 
 applysubstLemma : ∀ {Γ Δ : Context} {A : Ty} → (x : Γ ∋ A ) → (σ : Δ ⊢s Γ) 
                 → ⟦ Δ ⊢ σ x ⟧ₗ ≅ find Γ x ∙ ⟦ σ ⟧s
 applysubstLemma Z σ = sym law2
 applysubstLemma (S x) σ = trans (trans (applysubstLemma x (weakσ σ)) (congr (sym law1))) (sym ass)
 
-{-------------------------------------------------------------------------------}
+
+{- / Demostraciones auxiliares -}
+
+
+{- Lemas auxiliares -}
+
+-- Lema para substitución simultánea
 
 substitutionSemantics : ∀ {Γ Δ : Context} {A : Ty} → (t : Term Γ A) → (σ : Δ ⊢s Γ) →
            ⟦ Δ ⊢ sub σ t ⟧ₗ ≅ ⟦ Γ ⊢ t ⟧ₗ ∙ ⟦ σ ⟧s
@@ -250,6 +315,8 @@ substitutionSemantics {Γ} {Δ} {A} (lam σ₁ t₁) σ = proof
                            curry ⟦ Γ ,ₓ σ₁ ⊢ t₁ ⟧ₗ ∙ ⟦ σ ⟧s
                           ∎
 
+-- Lema para substitución simple: es un caso particular del lema para substitución simultánea
+
 singleSubstitutionSemantics : ∀ {Γ : Context} {A A' : Ty} → (t : Term (Γ ,ₓ A) A') → (t' : Term Γ A) →
                ⟦ Γ ⊢ t [ t' ] ⟧ₗ ≅ ⟦ (Γ ,ₓ A) ⊢ t ⟧ₗ ∙ ⟨ iden {⟦ Γ ⟧ₓ} , ⟦ Γ ⊢ t' ⟧ₗ ⟩
 singleSubstitutionSemantics {Γ} {A} {A'} t t' = 
@@ -267,7 +334,12 @@ singleSubstitutionSemantics {Γ} {A} {A'} t t' =
     ⟦ Γ ,ₓ A ⊢ t ⟧ₗ ∙ ⟨ iden , ⟦ Γ ⊢ t' ⟧ₗ ⟩
     ∎
 
-{-------}
+
+{- / Lemas auxiliares -}
+
+{-
+  Prueba para la regla β
+-}
 
 β-proof : ∀ {Γ : Context} {A B : Ty} → (e : Term (Γ ,ₓ A) B) → (x : Term Γ A) →
             ⟦ Γ ⊢ lam A e ⊕ x ⟧ₗ ≅ ⟦ Γ ⊢ e [ x ] ⟧ₗ
@@ -279,12 +351,13 @@ singleSubstitutionSemantics {Γ} {A} {A'} t t' =
     (apply ∙ pair (curry ⟦ Γ ,ₓ A ⊢ e ⟧ₗ) iden) ∙ ⟨ iden , ⟦ Γ ⊢ x ⟧ₗ ⟩ 
     ≅⟨ congl (Properties.curry-exp hasProducts T hasTerminal isCCC) ⟩
     ⟦ Γ ,ₓ A ⊢ e ⟧ₗ ∙ ⟨ iden , ⟦ Γ ⊢ x ⟧ₗ ⟩
-    ≅⟨ sym (singleSubstitutionSemantics e x) ⟩ -- usar la demostracion de la igualdad de la substitucion
+    ≅⟨ sym (singleSubstitutionSemantics e x) ⟩
     ⟦ Γ ⊢ e [ x ] ⟧ₗ 
     ∎
 
-
--- Finalmente demostramos Soundness
+{-
+  Finalmente demostramos Soundness
+-}
 
 soundness : ∀ {τ} → {Γ : Context} → {t : Term Γ τ} → {u : Term Γ τ} →
             (t ≡ₜ u) → (⟦ Γ ⊢ t ⟧ₗ) ≅ (⟦ Γ ⊢ u ⟧ₗ)
