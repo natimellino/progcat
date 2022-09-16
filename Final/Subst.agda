@@ -21,9 +21,10 @@ rename ρ (p₁ t) = p₁ (rename ρ t)
 rename ρ (p₂ t) = p₂ (rename ρ t)
 rename ρ (lam σ t) = lam σ (rename (extt ρ) t)
 
--- Lo mismo que extt pero para substituciones
 _⊢s_ : (Δ Γ : Context) → Set
 _⊢s_ Δ Γ = (∀ {A} → Γ ∋ A → Term Δ A)
+
+-- Nos permite extender el contexto de tipado para las substituciones
 
 exts : ∀ {Γ Δ}
        → (Δ ⊢s Γ)   
